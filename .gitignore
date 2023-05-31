@@ -1,14 +1,36 @@
-# Compiler files
-cache/
-out/
+# directories
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+**/cache
+**/node_modules
+**/out
+node_modules
+.vscode
 
-# Ignores development broadcast logs
+docs/src/*
+docs/book/*
+docs/book.css
+docs/book.toml
+docs/solidity.min.js
+docs/.gitignore
+
+# files
+*.env
+*.log
+script/.deploy-config.json
+.DS_Store
+.pnp.*
+yarn-debug.log*
+yarn-error.log*
+
+# broadcasts
 !/broadcast
+/broadcast/*
 /broadcast/*/31337/
-/broadcast/**/dry-run/
 
-# Docs
-docs/
-
-# Dotenv file
-.env
+# remappings
+remappings.txt

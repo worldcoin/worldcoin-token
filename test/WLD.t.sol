@@ -6,19 +6,16 @@ import "../src/WLD.sol";
 import "../src/interfaces/IWLD.sol";
 import "../src/WLDImplV1.sol";
 
-contract CounterTest is Test {
+contract WLDTest is Test {
     IWLD token;
-    uint initialTime = 1234 seconds;
-    uint oneYear = 31556926 seconds + 1 seconds;
-    uint moreThanAYear = 31556926 seconds + 1 seconds;
+    uint256 initialTime = 1234 seconds;
+    uint256 oneYear = 31556926 seconds + 1 seconds;
+    uint256 moreThanAYear = 31556926 seconds + 1 seconds;
 
     function setUp() public {
         address impl = address(new WLDImplV1());
         // 10% inflatioy YOY above 1000 initial supply
-        bytes memory initCall = abi.encodeCall(
-            WLDImplV1.initialize,
-            (1000, 1, 10)
-        );
+        bytes memory initCall = abi.encodeCall(WLDImplV1.initialize, (1000, 1, 10));
         token = IWLD(address(new WLD(impl, initCall)));
         vm.warp(initialTime);
     }

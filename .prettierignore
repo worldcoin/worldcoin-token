@@ -1,0 +1,18 @@
+# directories
+.yarn/
+**/broadcast
+**/cache
+**/lib
+**/out
+**/node_modules
+
+# Solidity
+*.sol
+
+# files
+*.env
+*.log
+.pnp.*
+coverage.json
+yarn-debug.log*
+yarn-error.log*

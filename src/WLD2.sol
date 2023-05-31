@@ -1,34 +1,37 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.19;
 
-import {IWLD} from "./interfaces/IWLD.sol";
-import {WLDImpl} from "./abstract/WLDImpl.sol";
-import {ERC20Upgradeable} from "openzeppelin-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import {Ownable2Step} from "openzeppelin/access/Ownable2Step.sol";
+import {ERC20} from "openzeppelin/token/ERC20/ERC20.sol";
 
-contract WLDImplV1 is IWLD, WLDImpl, ERC20Upgradeable {
+contract WLD2 is ERC20("Worldcoin", "WLD"), Ownable2Step {
     struct SupplyInfo {
         uint256 timestamp;
         uint256 amount;
     }
 
-    uint256 constant YEAR_IN_SECONDS = 31556926;
-    uint256 initialSupplyCap;
-    uint256 inflationCapNumerator;
-    uint256 inflationCapDenominator;
-    uint256 yearAgoCursor;
-    SupplyInfo[] supplyHistory;
+    uint256 internal constant YEAR_IN_SECONDS = 31556926;
+    uint256 public initialSupplyCap;
+    uint256 public inflationCapNumerator;
+    uint256 public inflationCapDenominator;
+    uint256 public yearAgoCursor;
+    SupplyInfo[] public supplyHistory;
 
-    function initialize(uint256 _initialSupplyCap, uint256 _inflationCapNumerator, uint256 _inflationCapDenominator)
-        public
-        reinitializer(1)
-    {
-        __WLDImpl_init();
-        __ERC20_init("Worldcoin", "WLD");
-
+    constructor(
+        uint256 _initialSupplyCap,
+        uint256 _inflationCapNumerator,
+        uint256 _inflationCapDenominator,
+        address[] memory initialBeneficiaries,
+        uint256[] memory initialAmounts
+    ) {
         initialSupplyCap = _initialSupplyCap;
         inflationCapNumerator = _inflationCapNumerator;
         inflationCapDenominator = _inflationCapDenominator;
         yearAgoCursor = 0;
+        require(initialAmounts.length == initialBeneficiaries.length);
+        for (uint256 i = 0; i < initialBeneficiaries.length; i++) {
+            _mint(initialBeneficiaries[i], initialAmounts[i]);
+        }
     }
 
     /// @notice Mints new tokens and assigns them to the target address.
@@ -39,7 +42,7 @@ contract WLDImplV1 is IWLD, WLDImpl, ERC20Upgradeable {
     ///       making sure that the total supply of tokens does not increase by more than
     ///       `1 + (inflationCapNumerator / inflationCapDenominator)` times during any
     ///       31556926 seconds (approx. 1 year) period.
-    function mint(address to, uint256 amount) public virtual onlyProxy onlyOwner {
+    function mint(address to, uint256 amount) public virtual onlyOwner {
         uint256 currentTotal = totalSupply();
         uint256 newTotal = currentTotal + amount;
         if (currentTotal < initialSupplyCap) {
@@ -66,14 +69,14 @@ contract WLDImplV1 is IWLD, WLDImpl, ERC20Upgradeable {
         _mint(to, amount);
     }
 
-    function _requireInflationCap(uint256 oldTotal, uint256 newTotal) internal view virtual onlyProxy {
+    function _requireInflationCap(uint256 oldTotal, uint256 newTotal) internal view virtual {
         require(
             newTotal * inflationCapDenominator <= oldTotal * (inflationCapNumerator + inflationCapDenominator),
             "WLD: inflation cap reached"
         );
     }
 
-    function _advanceYearAgoCursor() internal virtual onlyProxy {
+    function _advanceYearAgoCursor() internal virtual {
         uint256 currentTimestamp = block.timestamp;
         uint256 currentPosition = yearAgoCursor;
         // Advancing the cursor until the first of:
@@ -89,7 +92,7 @@ contract WLDImplV1 is IWLD, WLDImpl, ERC20Upgradeable {
         yearAgoCursor = currentPosition;
     }
 
-    function _getTotalSupplyYearAgo() internal view virtual onlyProxy returns (uint256) {
+    function _getTotalSupplyYearAgo() internal view virtual returns (uint256) {
         return supplyHistory[yearAgoCursor].amount;
     }
 }

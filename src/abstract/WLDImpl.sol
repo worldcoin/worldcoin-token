@@ -16,9 +16,7 @@ abstract contract WLDImpl is Ownable2StepUpgradeable, UUPSUpgradeable {
         revert CannotRenounceOwnership();
     }
 
-    function _authorizeUpgrade(
-        address newImplementation
-    ) internal virtual override onlyProxy onlyOwner {
+    function _authorizeUpgrade(address newImplementation) internal virtual override onlyProxy onlyOwner {
         // No body needed as `onlyOwner` handles it.
     }
 }

@@ -1,0 +1,2 @@
+CounterTest:testMintsCrossingInitialCap() (gas: 462675)
+CounterTest:testMintsReachingInitialCap() (gas: 314548)
