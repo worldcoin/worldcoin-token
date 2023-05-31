@@ -26,6 +26,12 @@ On a separate terminal, run a local blockchain:
 anvil --mnemonic $MNEMONIC
 ```
 
+Duplicate `.env.example` into `.env` and populate with correct information. Subsequently run:
+
+```bash
+source .env
+```
+
 Manually convert mock data to constructor arguments and feed it to `forge create` via the `--constructor-args` flag:
 
 ```bash
