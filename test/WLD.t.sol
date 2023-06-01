@@ -3,71 +3,79 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import "../src/WLD.sol";
-import "../src/interfaces/IWLD.sol";
-import "../src/WLDImplV1.sol";
 
-contract CounterTest is Test {
-    IWLD token;
-    uint initialTime = 1234 seconds;
-    uint oneYear = 31556926 seconds + 1 seconds;
-    uint moreThanAYear = 31556926 seconds + 1 seconds;
+contract WLDTest is Test {
+    uint _initialTime = 1234 seconds;
+    string _symbol = "WLD";
+    string _name = "Worldcoin";
+    uint8 _decimals = 18;
+    // setting inflation to 10% YOY
+    uint256 _inflationCapPeriod = 31556926 seconds;
+    uint256 _inflationCapNumerator = 1;
+    uint256 _inflationCapDenominator = 10;
+    // one year before minting possible
+    uint256 _mintLockInPeriod = 31556926 seconds;
+    address[] _initialHolders = [address(0x123), address(0x456)];
+    uint256[] _initialAmounts = [500, 500];
+    WLD _token;
+    address _minter = address(uint160(uint256(keccak256("wld minter"))));
 
     function setUp() public {
-        address impl = address(new WLDImplV1());
-        // 10% inflatioy YOY above 1000 initial supply
-        bytes memory initCall = abi.encodeCall(
-            WLDImplV1.initialize,
-            (1000, 1, 10)
+        vm.warp(_initialTime);
+        _token = new WLD(
+            _symbol,
+            _name,
+            _decimals,
+            _inflationCapPeriod,
+            _inflationCapNumerator,
+            _inflationCapDenominator,
+            _mintLockInPeriod,
+            _initialHolders,
+            _initialAmounts
         );
-        token = IWLD(address(new WLD(impl, initCall)));
-        vm.warp(initialTime);
+        _token.setMinter(_minter);
     }
 
-    function testMintsReachingInitialCap() public {
-        // possible, below initial cap
-        token.mint(address(this), 100);
-        // possible, reaching initial cap
-        token.mint(address(this), 900);
-        // not possible, exceeding inflation cap
-        vm.expectRevert(bytes("WLD: inflation cap reached"));
-        token.mint(address(this), 101);
-        // 100 is still below inflation, should work
-        token.mint(address(this), 100);
-        // any further mint fails
-        vm.expectRevert(bytes("WLD: inflation cap reached"));
-        token.mint(address(this), 1);
-        // wait a year
-        vm.warp(initialTime + moreThanAYear);
-        // can't mint more than 10% of 1100, which is 110.
-        vm.expectRevert(bytes("WLD: inflation cap reached"));
-        token.mint(address(this), 111);
-        // 110 is still below inflation, should work
-        token.mint(address(this), 110);
-        // verify all mints went through
-        assert(token.balanceOf(address(this)) == 1210);
+    modifier asMinter {
+        vm.startPrank(_minter);
+        _;
+        vm.stopPrank();
     }
 
-    function testMintsCrossingInitialCap() public {
-        // fails – more than initial cap + inflation cap
-        vm.expectRevert(bytes("WLD: inflation cap reached"));
-        token.mint(address(this), 1101);
-        // works – more than initial cap, but below cap + inflation
-        token.mint(address(this), 1050); // supply == 1050
-        vm.warp(initialTime + 1000 seconds);
+    function testMintsLockInPeriod() public asMinter {
+        vm.expectRevert(bytes("Mint lock-in period not over"));
+        _token.mint(address(this), 100);
+        vm.warp(_initialTime + _mintLockInPeriod - 1);
+        vm.expectRevert(bytes("Mint lock-in period not over"));
+        _token.mint(address(this), 100);
+        vm.warp(_initialTime + _mintLockInPeriod);
+        _token.mint(address(this), 100);
+        assert(_token.balanceOf(address(this)) == 100);
+    }
+
+    function testInflationCap() public asMinter {
+        vm.warp(_initialTime + _mintLockInPeriod);
+        // fails – more than initial supply + inflation cap
+        vm.expectRevert(bytes("Inflation cap reached"));
+        _token.mint(address(this), 101);
+        // works – below initial supply + inflation
+        _token.mint(address(this), 50); // supply == 1050
+        vm.warp(_initialTime + _mintLockInPeriod + 1000 seconds);
         // works - minting up to yearly cap
-        token.mint(address(this), 50); // supply == 1100
+        _token.mint(address(this), 50); // supply == 1100
         // fails - exceeding yearly cap
-        vm.expectRevert(bytes("WLD: inflation cap reached"));
-        token.mint(address(this), 1);
-        vm.warp(initialTime + 1000 seconds + moreThanAYear);
+        vm.expectRevert(bytes("Inflation cap reached"));
+        _token.mint(address(this), 1);
+        vm.warp(_initialTime + _mintLockInPeriod + _inflationCapPeriod + 1001 seconds);
         // works - next cap is 110
-        token.mint(address(this), 60); // supply == 1160
+        _token.mint(address(this), 60); // supply == 1160
         // fails - exceeding yearly cap
-        vm.expectRevert(bytes("WLD: inflation cap reached"));
-        token.mint(address(this), 51);
+        vm.expectRevert(bytes("Inflation cap reached"));
+        _token.mint(address(this), 51);
         // succeeds - 50 is still below cap
-        token.mint(address(this), 50); // supply == 1210
+        _token.mint(address(this), 50); // supply == 1210
 
-        assert(token.balanceOf(address(this)) == 1210);
+        assert(_token.balanceOf(address(this)) == 210);
+        assert(_token.totalSupply() == 1210);
     }
 }
