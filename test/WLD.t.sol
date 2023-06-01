@@ -42,6 +42,27 @@ contract WLDTest is Test {
         vm.stopPrank();
     }
 
+    function testMintAccessControl(address minter) public {
+        vm.warp(_initialTime + _mintLockInPeriod + 20 seconds);
+        vm.startPrank(minter);
+        if (minter != _minter) {
+            vm.expectRevert(bytes("Caller is not the minter"));
+        }
+        _token.mint(address(this), 20);
+    }
+
+    function testInitialDistributionHappens() public {
+        assert(_token.balanceOf(address(0x123)) == 500);
+        assert(_token.balanceOf(address(0x456)) == 500);
+        assert(_token.totalSupply() == 1000);
+    }
+
+    function testInitialDistributionRestricted(address receiver) public {
+        if (receiver != address(0x123) && receiver != address(0x456)) {
+            assert(_token.balanceOf(receiver) == 0);
+        }
+    }
+
     function testMintsLockInPeriod() public asMinter {
         vm.expectRevert(bytes("Mint lock-in period not over"));
         _token.mint(address(this), 100);

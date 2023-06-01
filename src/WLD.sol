@@ -151,7 +151,7 @@ contract WLD is ERC20, Ownable2Step {
     }
 
     function _requireMinter() internal view {
-        require(_msgSender() == _minter, "WLD: caller is not the minter");
+        require(_msgSender() == _minter, "Caller is not the minter");
     }
 
     function _getConstructionTime() internal view returns (uint256) {
