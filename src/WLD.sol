@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
-
+import {Ownable} from "openzeppelin/access/Ownable.sol";
 import {Ownable2Step} from "openzeppelin/access/Ownable2Step.sol";
 import {ERC20} from "openzeppelin/token/ERC20/ERC20.sol";
-import "forge-std/console.sol";
 
 
 contract WLD is ERC20, Ownable2Step {
@@ -20,7 +19,7 @@ contract WLD is ERC20, Ownable2Step {
     string private _symbol;
     string private _name;
     uint8 private _decimals;
-    address private _minter;
+    address minter;
     SupplyInfo[] private _supplyHistory;
 
     // ********************
@@ -37,7 +36,7 @@ contract WLD is ERC20, Ownable2Step {
         uint256 mintLockInPeriod_,
         address[] memory initialHolders,
         uint256[] memory initialAmounts
-    ) ERC20(name_, symbol_) {
+    ) ERC20(name_, symbol_) Ownable(msg.sender) {
         _name = name_;
         _symbol = symbol_;
         _decimals = decimals_;
@@ -48,7 +47,7 @@ contract WLD is ERC20, Ownable2Step {
         _inflationPeriodCursor = 0;
         require(initialAmounts.length == initialHolders.length);
         for (uint256 i = 0; i < initialHolders.length; i++) {
-            _mint(initialHolders[i], initialAmounts[i]);
+            _update(address(0), initialHolders[i], initialAmounts[i]);
         }
         _supplyHistory.push(SupplyInfo(block.timestamp, totalSupply()));
     }
@@ -90,7 +89,7 @@ contract WLD is ERC20, Ownable2Step {
     }
 
     function setMinter(address minter_) public onlyOwner {
-        _minter = minter_;
+        minter = minter_;
     }
 
     // **********************
@@ -108,7 +107,7 @@ contract WLD is ERC20, Ownable2Step {
         _requireMinter();
         _requirePostMintLockInPeriod();
         _advanceInflationPeriodCursor();
-        uint256 oldTotal = _getTotalSupplyYearAgo();
+        uint256 oldTotal = _getTotalSupplyInflationPeriodAgo();
         uint256 newTotal = totalSupply() + amount;
         _requireInflationCap(oldTotal, newTotal);
         _supplyHistory.push(SupplyInfo(block.timestamp, newTotal));
@@ -146,12 +145,12 @@ contract WLD is ERC20, Ownable2Step {
         _inflationPeriodCursor = currentPosition;
     }
 
-    function _getTotalSupplyYearAgo() internal view returns (uint256) {
+    function _getTotalSupplyInflationPeriodAgo() internal view returns (uint256) {
         return _supplyHistory[_inflationPeriodCursor].amount;
     }
 
     function _requireMinter() internal view {
-        require(_msgSender() == _minter, "Caller is not the minter");
+        require(_msgSender() == minter, "Caller is not the minter");
     }
 
     function _getConstructionTime() internal view returns (uint256) {
