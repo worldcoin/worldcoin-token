@@ -157,7 +157,7 @@ contract WLD is ERC20, Ownable2Step {
     /// @notice Prevents the owner from renouncing ownership
     /// @dev onlyOwner
     function renounceOwnership() public view override onlyOwner {
-        revert("Cannot renounce ownership");
+        revert CannotRenounceOwnership();
     }
 
     ///////////////////////////////////////////////////////////////////
