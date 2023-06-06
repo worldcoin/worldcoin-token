@@ -19,7 +19,7 @@ contract WLD is ERC20, Ownable2Step {
     string private _symbol;
     string private _name;
     uint8 private _decimals;
-    address minter;
+    address public minter;
     SupplyInfo[] private _supplyHistory;
 
     // ********************
