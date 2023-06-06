@@ -175,7 +175,7 @@ contract WLDTest is Test {
     ///////////////////////////////////////////////////////////////////
 
     function testRenounceOwnershipReverts() public asOwner {
-        vm.expectRevert("Cannot renounce ownership");
+        vm.expectRevert(CannotRenounceOwnership.selector);
         _token.renounceOwnership();
     }
 }
