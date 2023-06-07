@@ -56,27 +56,6 @@ contract WLD is ERC20, Ownable2Step {
     error CannotRenounceOwnership();
 
     ///////////////////////////////////////////////////////////////////
-    ///                          MODIFIERS                          ///
-    ///////////////////////////////////////////////////////////////////
-
-    /// @notice Requires that the current time is after the mint lock-in period.
-    /// @custom:revert MintLockInPeriodNotOver The mint lock-in period is not over.
-    modifier onlyPostMintLockInPeriod() {
-        if (block.timestamp < _getConstructionTime() + _mintLockInPeriod) {
-            revert MintLockInPeriodNotOver();
-        }
-
-        _;
-    }
-
-    /// @notice Requires that the caller is the minter.
-    /// @custom:revert NotMinter The caller is not the minter.
-    modifier onlyMinter() {
-        if (_msgSender() != minter) revert NotMinter();
-        _;
-    }
-
-    ///////////////////////////////////////////////////////////////////
     ///                         CONSTRUCTOR                         ///
     ///////////////////////////////////////////////////////////////////
 
@@ -171,7 +150,9 @@ contract WLD is ERC20, Ownable2Step {
     ///       making sure that the total supply of tokens does not increase by more than
     ///       `1 + (inflationCapNumerator / inflationCapDenominator)` times during any
     ///       `_inflationCapPeriod` seconds period.
-    function mint(address to, uint256 amount) public onlyMinter onlyPostMintLockInPeriod {
+    function mint(address to, uint256 amount) public {
+        _requireMinter();
+        _requirePostMintLockInPeriod();
         _advanceInflationPeriodCursor();
         uint256 oldTotal = _getTotalSupplyInflationPeriodAgo();
         uint256 newTotal = totalSupply() + amount;
@@ -183,8 +164,14 @@ contract WLD is ERC20, Ownable2Step {
     /// @notice Prevents the minter from minting tokens above the inflation cap.
     /// @param oldTotal The total supply before the requested mint
     /// @param newTotal The total supply after the requested mint
-    function _requireInflationCap(uint256 oldTotal, uint256 newTotal) internal view {
-        if (newTotal * _inflationCapDenominator > oldTotal * (_inflationCapNumerator + _inflationCapDenominator)) {
+    function _requireInflationCap(
+        uint256 oldTotal,
+        uint256 newTotal
+    ) internal view {
+        if (
+            newTotal * _inflationCapDenominator >
+            oldTotal * (_inflationCapNumerator + _inflationCapDenominator)
+        ) {
             revert InflationCapReached();
         }
     }
@@ -200,8 +187,9 @@ contract WLD is ERC20, Ownable2Step {
         // That means that the cursor will point to the youngest timestamp that
         // is older than said period, i.e. the supply at _inflationCapPeriod ago.
         while (
-            currentPosition + 1 < supplyHistory.length
-                && supplyHistory[currentPosition + 1].timestamp + _inflationCapPeriod < currentTimestamp
+            currentPosition + 1 < supplyHistory.length &&
+            supplyHistory[currentPosition + 1].timestamp + _inflationCapPeriod <
+            currentTimestamp
         ) {
             currentPosition += 1;
         }
@@ -209,12 +197,30 @@ contract WLD is ERC20, Ownable2Step {
     }
 
     /// @notice Returns the total supply .
-    function _getTotalSupplyInflationPeriodAgo() internal view returns (uint256) {
+    function _getTotalSupplyInflationPeriodAgo()
+        internal
+        view
+        returns (uint256)
+    {
         return supplyHistory[_inflationPeriodCursor].amount;
     }
 
     /// @notice Returns the supply at the time of construction.
     function _getConstructionTime() internal view returns (uint256) {
         return supplyHistory[0].timestamp;
+    }
+
+    /// @notice Requires that the current time is after the mint lock-in period.
+    /// @custom:revert MintLockInPeriodNotOver The mint lock-in period is not over.
+    function _requirePostMintLockInPeriod() internal view {
+        if (block.timestamp < _getConstructionTime() + _mintLockInPeriod) {
+            revert MintLockInPeriodNotOver();
+        }
+    }
+
+    /// @notice Requires that the caller is the minter.
+    /// @custom:revert NotMinter The caller is not the minter.
+    function _requireMinter() internal view {
+        if (_msgSender() != minter) revert NotMinter();
     }
 }
