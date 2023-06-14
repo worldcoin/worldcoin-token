@@ -52,6 +52,7 @@ contract WLDTest is Test {
             _initialAmounts
         );
         _token.setMinter(_minter);
+        vm.stopPrank();
     }
 
     ///////////////////////////////////////////////////////////////////
@@ -96,7 +97,7 @@ contract WLDTest is Test {
     }
 
     /// @notice Tests that the owner can change the decimal precisition of the token (should be 9 or 18).
-    function testSetDecimals(uint8 decimals) public {
+    function testSetDecimals(uint8 decimals) public asOwner {
         vm.assume(decimals > 0);
         _token.setDecimals(decimals);
 
@@ -108,7 +109,7 @@ contract WLDTest is Test {
         vm.assume(minter != _minter);
         vm.warp(_initialTime + _mintLockInPeriod + 20 seconds);
 
-        vm.startPrank(minter);
+        vm.prank(minter);
         vm.expectRevert(NotMinter.selector);
         _token.mint(address(this), 20);
     }
