@@ -11,7 +11,6 @@ contract WLDTest is Test {
     uint256 _initialTime = 1234 seconds;
     string _symbol = "WLD";
     string _name = "Worldcoin";
-    uint8 _decimals = 18;
     // setting inflation to 10% YOY
     uint256 _inflationCapPeriod = 31556926 seconds;
     uint256 _inflationCapNumerator = 1;
@@ -43,7 +42,6 @@ contract WLDTest is Test {
         _token = new WLD(
             _symbol,
             _name,
-            _decimals,
             _inflationCapPeriod,
             _inflationCapNumerator,
             _inflationCapDenominator,
@@ -96,12 +94,9 @@ contract WLDTest is Test {
         assert(keccak256(bytes(_token.symbol())) == keccak256(bytes(symbol)));
     }
 
-    /// @notice Tests that the owner can change the decimal precisition of the token (should be 9 or 18).
-    function testSetDecimals(uint8 decimals) public asOwner {
-        vm.assume(decimals > 0);
-        _token.setDecimals(decimals);
-
-        assert(_token.decimals() == decimals);
+    /// @notice Tests that the decimals are hardcoded to 18.
+    function testDecimals() public view {
+        assert(_token.decimals() == 18);
     }
 
     /// @notice Tests that the minter can mint tokens after the lock-in period.
