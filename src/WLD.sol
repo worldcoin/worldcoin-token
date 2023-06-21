@@ -13,12 +13,6 @@ contract WLD is ERC20, Ownable2Step {
     ///                           STORAGE                           ///
     ///////////////////////////////////////////////////////////////////
 
-    /// @notice Information about the supply of the WLD token at a given point in time
-    struct SupplyInfo {
-        uint256 timestamp;
-        uint256 amount;
-    }
-
     /// @notice The address of the minter
     address public minter;
 
@@ -26,10 +20,12 @@ contract WLD is ERC20, Ownable2Step {
     uint256 private _inflationCapPeriod;
     uint256 private _inflationCapNumerator;
     uint256 private _inflationCapDenominator;
-    uint256 private _inflationPeriodCursor;
+    uint256 private _currentPeriodStart;
+    uint256 private _currentPeriodInitialSupply;
 
     /// @notice How many seconds until the mint lock-in period is over
     uint256 private _mintLockInPeriod;
+    uint256 immutable private _deploymentTime;
 
     /// @notice The symbol of the token
     string private _symbol;
@@ -39,9 +35,6 @@ contract WLD is ERC20, Ownable2Step {
 
     /// @notice The number of decimals for the WLD token
     uint8 private _decimals;
-
-    /// @notice The history of the WLD token's supply
-    SupplyInfo[] public supplyHistory;
 
     /// @notice Emitted in revert if the mint lock-in period is not over.
     error MintLockInPeriodNotOver();
@@ -77,12 +70,11 @@ contract WLD is ERC20, Ownable2Step {
         _inflationCapNumerator = inflationCapNumerator_;
         _inflationCapDenominator = inflationCapDenominator_;
         _mintLockInPeriod = mintLockInPeriod_;
-        _inflationPeriodCursor = 0;
+        _deploymentTime = block.timestamp;
         require(initialAmounts.length == initialHolders.length);
         for (uint256 i = 0; i < initialHolders.length; i++) {
             _update(address(0), initialHolders[i], initialAmounts[i]);
         }
-        supplyHistory.push(SupplyInfo(block.timestamp, totalSupply()));
     }
 
     ///////////////////////////////////////////////////////////////////
@@ -146,74 +138,58 @@ contract WLD is ERC20, Ownable2Step {
     /// @notice Mints new tokens and assigns them to the target address.
     /// @dev This function performs inflation checks. Their semantics is as follows:
     ///     * It is impossible to mint any tokens during the first `_mintLockInPeriod` seconds
-    ///     * After the initial supply cap is reached, the inflation cap is in effect,
-    ///       making sure that the total supply of tokens does not increase by more than
-    ///       `1 + (inflationCapNumerator / inflationCapDenominator)` times during any
-    ///       `_inflationCapPeriod` seconds period.
+    ///     * After the initial supply cap is reached, the inflation cap is in effect.
+    ///       The inflation cap is enforced as follows:
+    ///       1. If the current time is after the end of the current inflation period,
+    ///          it is possible to raise the supply up to (current total supply) * (1 + inflation cap)
+    ///          between now and (now + inflation period length), without any additional constraints;
+    ///       2. If the current time is before the end of the current inflation period,
+    ///          that period's supply is still controlled.
+    /// NB: The logic outlined here means that it is possible for period over period inflation
+    ///     to reach up to (1 + inflation cap)^2 - 1, for some choices of period boundaries.
+    ///     The actual guarantees of this system are:
+    ///     1. For any timestamp t0 and a natural number k, inflation measured between t0 and
+    ///        t0 + k * inflation period does not exceed (1 + inflation cap)^(k + 1) - 1. In other words,
+    ///        there is at most "one too many" inflation periods over any period of time.
+    ///     2. For any timestamp t there exists a period tc < inflation period,
+    ///        such that inflation measured between (t + tc) and (t + tc + inflation period)
+    ///        does not exceed the inflation cap. In other words, period over period inflation is
+    ///        bounded by the inflation cap at least for some amount of time during each period.
     function mint(address to, uint256 amount) public {
         _requireMinter();
         _requirePostMintLockInPeriod();
-        _advanceInflationPeriodCursor();
-        uint256 oldTotal = _getTotalSupplyInflationPeriodAgo();
-        uint256 newTotal = totalSupply() + amount;
-        _requireInflationCap(oldTotal, newTotal);
-        supplyHistory.push(SupplyInfo(block.timestamp, newTotal));
+        _adjustCurrentPeriod();
+        _requireInflationCap(amount);
         _mint(to, amount);
     }
 
+    /// @notice Checks the inflation period against block timestamp and moves
+    /// it forward if it is due.
+    function _adjustCurrentPeriod() internal {
+        if (block.timestamp > _currentPeriodStart + _inflationCapPeriod) {
+            _currentPeriodStart = block.timestamp;
+            _currentPeriodInitialSupply = totalSupply();
+        }
+    }
+
     /// @notice Prevents the minter from minting tokens above the inflation cap.
-    /// @param oldTotal The total supply before the requested mint
-    /// @param newTotal The total supply after the requested mint
+    /// @param mintAmount The amount of newly minted tokens.
     function _requireInflationCap(
-        uint256 oldTotal,
-        uint256 newTotal
+        uint256 mintAmount
     ) internal view {
+        uint256 newTotal = totalSupply() + mintAmount;
         if (
             newTotal * _inflationCapDenominator >
-            oldTotal * (_inflationCapNumerator + _inflationCapDenominator)
+            _currentPeriodInitialSupply * (_inflationCapNumerator + _inflationCapDenominator)
         ) {
             revert InflationCapReached();
         }
     }
 
-    /// @notice Advances the inflation period cursor to the _inflationPeriodCursor by 1.
-    function _advanceInflationPeriodCursor() internal {
-        uint256 currentTimestamp = block.timestamp;
-        uint256 currentPosition = _inflationPeriodCursor;
-        // Advancing the cursor until the first of:
-        // * we reach the end of the array, or
-        // * we reach the first timestamp such that the next timestamp is
-        //   younger than _inflationCapPeriod.
-        // That means that the cursor will point to the youngest timestamp that
-        // is older than said period, i.e. the supply at _inflationCapPeriod ago.
-        while (
-            currentPosition + 1 < supplyHistory.length &&
-            supplyHistory[currentPosition + 1].timestamp + _inflationCapPeriod <
-            currentTimestamp
-        ) {
-            currentPosition += 1;
-        }
-        _inflationPeriodCursor = currentPosition;
-    }
-
-    /// @notice Returns the total supply .
-    function _getTotalSupplyInflationPeriodAgo()
-        internal
-        view
-        returns (uint256)
-    {
-        return supplyHistory[_inflationPeriodCursor].amount;
-    }
-
-    /// @notice Returns the supply at the time of construction.
-    function _getConstructionTime() internal view returns (uint256) {
-        return supplyHistory[0].timestamp;
-    }
-
     /// @notice Requires that the current time is after the mint lock-in period.
     /// @custom:revert MintLockInPeriodNotOver The mint lock-in period is not over.
     function _requirePostMintLockInPeriod() internal view {
-        if (block.timestamp < _getConstructionTime() + _mintLockInPeriod) {
+        if (block.timestamp < _deploymentTime + _mintLockInPeriod) {
             revert MintLockInPeriodNotOver();
         }
     }
