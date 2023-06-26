@@ -20,7 +20,7 @@ contract WLD is ERC20, Ownable2Step {
     uint256 private _inflationCapPeriod;
     uint256 private _inflationCapNumerator;
     uint256 private _inflationCapDenominator;
-    uint256 private _currentPeriodStart;
+    uint256 private _currentPeriodEnd;
     uint256 private _currentPeriodInitialSupply;
 
     /// @notice How many seconds until the mint lock-in period is over
@@ -166,8 +166,8 @@ contract WLD is ERC20, Ownable2Step {
     /// @notice Checks the inflation period against block timestamp and moves
     /// it forward if it is due.
     function _adjustCurrentPeriod() internal {
-        if (block.timestamp > _currentPeriodStart + _inflationCapPeriod) {
-            _currentPeriodStart = block.timestamp;
+        if (block.timestamp > _currentPeriodEnd) {
+            _currentPeriodEnd = block.timestamp + _inflationCapPeriod;
             _currentPeriodInitialSupply = totalSupply();
         }
     }
