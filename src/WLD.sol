@@ -33,9 +33,6 @@ contract WLD is ERC20, Ownable2Step {
     /// @notice The name of the token
     string private _name;
 
-    /// @notice The number of decimals for the WLD token
-    uint8 private _decimals;
-
     /// @notice Emitted in revert if the mint lock-in period is not over.
     error MintLockInPeriodNotOver();
 
@@ -55,7 +52,6 @@ contract WLD is ERC20, Ownable2Step {
     constructor(
         string memory name_,
         string memory symbol_,
-        uint8 decimals_,
         uint256 inflationCapPeriod_,
         uint256 inflationCapNumerator_,
         uint256 inflationCapDenominator_,
@@ -65,7 +61,6 @@ contract WLD is ERC20, Ownable2Step {
     ) ERC20(name_, symbol_) Ownable(msg.sender) {
         _name = name_;
         _symbol = symbol_;
-        _decimals = decimals_;
         _inflationCapPeriod = inflationCapPeriod_;
         _inflationCapNumerator = inflationCapNumerator_;
         _inflationCapDenominator = inflationCapDenominator_;
@@ -91,11 +86,6 @@ contract WLD is ERC20, Ownable2Step {
         return _symbol;
     }
 
-    /// @notice Returns the number of decimals for the token
-    function decimals() public view override returns (uint8) {
-        return _decimals;
-    }
-
     ///////////////////////////////////////////////////////////////////
     ///                        ADMIN ACTIONS                        ///
     ///////////////////////////////////////////////////////////////////
@@ -110,12 +100,6 @@ contract WLD is ERC20, Ownable2Step {
     /// @param symbol_ new symbol
     function setSymbol(string memory symbol_) public onlyOwner {
         _symbol = symbol_;
-    }
-
-    /// @notice Sets the token decimals
-    /// @param decimals_ new decimals
-    function setDecimals(uint8 decimals_) public onlyOwner {
-        _decimals = decimals_;
     }
 
     /// @notice Updates minter
