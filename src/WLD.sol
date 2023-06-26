@@ -44,6 +44,18 @@ contract WLD is ERC20, Ownable2Step {
     /// @notice Emmitted in revert if the owner attempts to resign ownership.
     error CannotRenounceOwnership();
 
+    /// @notice Emitted when constructing the contract
+    event TokenDeployed(
+        string name,
+        string symbol,
+        uint256 inflationCapPeriod,
+        uint256 inflationCapNumerator,
+        uint256 inflationCapDenominator,
+        uint256 mintLockPeriod,
+        address[] initialHolders,
+        uint256[] initialAmounts
+    );
+
     ///////////////////////////////////////////////////////////////////
     ///                         CONSTRUCTOR                         ///
     ///////////////////////////////////////////////////////////////////
@@ -58,6 +70,8 @@ contract WLD is ERC20, Ownable2Step {
         address[] memory initialHolders,
         uint256[] memory initialAmounts
     ) ERC20(name_, symbol_) Ownable(msg.sender) {
+        require(inflationCapDenominator_ != 0);
+        require(inflationCapPeriod_ != 0);
         _name = name_;
         _symbol = symbol_;
         _inflationCapPeriod = inflationCapPeriod_;
@@ -68,6 +82,16 @@ contract WLD is ERC20, Ownable2Step {
         for (uint256 i = 0; i < initialHolders.length; i++) {
             _update(address(0), initialHolders[i], initialAmounts[i]);
         }
+        emit TokenDeployed(
+            name_,
+            symbol_,
+            inflationCapPeriod_,
+            inflationCapNumerator_,
+            inflationCapDenominator_,
+            mintLockPeriod_,
+            initialHolders,
+            initialAmounts
+        );
     }
 
     ///////////////////////////////////////////////////////////////////
@@ -138,6 +162,7 @@ contract WLD is ERC20, Ownable2Step {
     ///        does not exceed the inflation cap. In other words, period over period inflation is
     ///        bounded by the inflation cap at least for some amount of time during each period.
     function mint(address to, uint256 amount) external {
+        require(amount != 0);
         _requireMinter();
         _requirePostMintLockPeriod();
         _adjustCurrentPeriod();
