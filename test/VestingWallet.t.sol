@@ -57,31 +57,6 @@ contract VestingWalletTest is Test {
         return schedule;
     }
 
-    function testEthVestingGetters() public {
-        uint256 amount = 1000;
-        payable(_wallet).transfer(amount);
-        ScheduleItem[] memory schedule = buildSchedule(amount, 64);
-        for (uint256 i = 0; i < schedule.length; i++) {
-            vm.warp(schedule[i].timestamp);
-            assert(
-                _wallet.vestedAmount(schedule[i].timestamp) ==
-                    schedule[i].expectedAmount
-            );
-        }
-    }
-
-    function testEthVestingExecution() public {
-        uint256 amount = 1000;
-        payable(_wallet).transfer(amount);
-        ScheduleItem[] memory schedule = buildSchedule(amount, 64);
-        _wallet.release();
-        assertEq(_beneficiary.balance, 0);
-        for (uint256 i = 0; i < schedule.length; i++) {
-            vm.warp(schedule[i].timestamp);
-            _wallet.release();
-            assertEq(_beneficiary.balance, schedule[i].expectedAmount);
-        }
-    }
 
     function testERC20VestingGetters() public {
         uint256 amount = 10000;
@@ -115,27 +90,6 @@ contract VestingWalletTest is Test {
             _wallet.release(address(token));
             assertEq(token.balanceOf(_beneficiary), schedule[i].expectedAmount);
         }
-    }
-
-    function testEthOwnershipTransfer() public {
-        uint256 amount = 1000;
-        payable(_wallet).transfer(amount);
-        ScheduleItem[] memory schedule = buildSchedule(amount, 3);
-        address newOwner = address(uint160(uint256(keccak256("new beneficiary"))));
-        vm.warp(schedule[1].timestamp);
-        _wallet.release();
-        assertEq(_beneficiary.balance, 500);
-        assertEq(newOwner.balance, 0);
-        vm.prank(_beneficiary);
-        _wallet.transferOwnership(newOwner);
-        assertEq(_wallet.owner(), _beneficiary);
-        vm.prank(newOwner);
-        _wallet.acceptOwnership();
-        assertEq(_wallet.owner(), newOwner);
-        vm.warp(schedule[2].timestamp);
-        _wallet.release();
-        assertEq(_beneficiary.balance, 500);
-        assertEq(newOwner.balance, 500);
     }
 
     function testERC20OwnershipTransfer() public {

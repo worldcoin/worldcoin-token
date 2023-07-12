@@ -35,10 +35,10 @@ contract VestingWallet is Ownable2Step {
      */
     error VestingWalletInvalidBeneficiary(address beneficiary);
 
-    uint256 private _released;
-    mapping(address => uint256) private _erc20Released;
-    uint64 private immutable _start;
-    uint64 private immutable _duration;
+    mapping(address => uint256) public released;
+    uint64 public immutable start;
+    uint64 public immutable duration;
+    uint64 public immutable end;
 
     /**
      * @dev Set the beneficiary, start timestamp and vesting duration of the vesting wallet.
@@ -47,8 +47,9 @@ contract VestingWallet is Ownable2Step {
         if (beneficiaryAddress == address(0)) {
             revert VestingWalletInvalidBeneficiary(address(0));
         }
-        _start = startTimestamp;
-        _duration = durationSeconds;
+        start = startTimestamp;
+        duration = durationSeconds;
+        end  = startTimestamp + durationSeconds;
     }
 
     /**
@@ -57,65 +58,11 @@ contract VestingWallet is Ownable2Step {
     receive() external payable {}
 
     /**
-     * @dev Getter for the start timestamp.
-     */
-    function start() public view returns (uint256) {
-        return _start;
-    }
-
-    /**
-     * @dev Getter for the vesting duration.
-     */
-    function duration() public view returns (uint256) {
-        return _duration;
-    }
-
-    /**
-     * @dev Getter for the end timestamp.
-     */
-    function end() public view returns (uint256) {
-        return start() + duration();
-    }
-
-    /**
-     * @dev Amount of eth already released
-     */
-    function released() public view returns (uint256) {
-        return _released;
-    }
-
-    /**
-     * @dev Amount of token already released
-     */
-    function released(address token) public view returns (uint256) {
-        return _erc20Released[token];
-    }
-
-    /**
-     * @dev Getter for the amount of releasable eth.
-     */
-    function releasable() public view returns (uint256) {
-        return vestedAmount(uint64(block.timestamp)) - released();
-    }
-
-    /**
      * @dev Getter for the amount of releasable `token` tokens. `token` should be the address of an
      * IERC20 contract.
      */
     function releasable(address token) public view returns (uint256) {
-        return vestedAmount(token, uint64(block.timestamp)) - released(token);
-    }
-
-    /**
-     * @dev Release the native token (ether) that have already vested.
-     *
-     * Emits a {EtherReleased} event.
-     */
-    function release() public {
-        uint256 amount = releasable();
-        _released += amount;
-        emit EtherReleased(amount);
-        Address.sendValue(payable(owner()), amount);
+        return vestedAmount(token, uint64(block.timestamp)) - released[token];
     }
 
     /**
@@ -125,23 +72,16 @@ contract VestingWallet is Ownable2Step {
      */
     function release(address token) public {
         uint256 amount = releasable(token);
-        _erc20Released[token] += amount;
+        released[token] += amount;
         emit ERC20Released(token, amount);
         SafeERC20.safeTransfer(IERC20(token), owner(), amount);
-    }
-
-    /**
-     * @dev Calculates the amount of ether that has already vested. Default implementation is a linear vesting curve.
-     */
-    function vestedAmount(uint64 timestamp) public view returns (uint256) {
-        return _vestingSchedule(address(this).balance + released(), timestamp);
     }
 
     /**
      * @dev Calculates the amount of tokens that has already vested. Default implementation is a linear vesting curve.
      */
     function vestedAmount(address token, uint64 timestamp) public view returns (uint256) {
-        return _vestingSchedule(IERC20(token).balanceOf(address(this)) + released(token), timestamp);
+        return _vestingSchedule(IERC20(token).balanceOf(address(this)) + released[token], timestamp);
     }
 
     /**
@@ -149,12 +89,12 @@ contract VestingWallet is Ownable2Step {
      * an asset given its total historical allocation.
      */
     function _vestingSchedule(uint256 totalAllocation, uint64 timestamp) internal view returns (uint256) {
-        if (timestamp < start()) {
+        if (timestamp < start) {
             return 0;
-        } else if (timestamp > end()) {
+        } else if (timestamp > end) {
             return totalAllocation;
         } else {
-            return (totalAllocation * (timestamp - start())) / duration();
+            return (totalAllocation * (timestamp - start)) / duration;
         }
     }
 }
