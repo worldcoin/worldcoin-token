@@ -22,7 +22,7 @@ import {Ownable} from "openzeppelin/access/Ownable.sol";
  * By setting the duration to 0, one can configure this contract to behave like an asset timelock that hold tokens for
  * a beneficiary until a specified time.
  *
- * The beneficiary is controlled through the {Ownable} mechanism, so they can assign the unvested portion of the assets
+ * The beneficiary is controlled through the {Ownable} mechanism, so they can assign the unreleased portion of the assets
  * to another party.
  */
 contract VestingWallet is Ownable2Step {
