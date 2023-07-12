@@ -64,7 +64,7 @@ contract VestingWalletTest is Test {
         recv[0] = address(_wallet);
         uint256[] memory amounts = new uint256[](1);
         amounts[0] = amount;
-        address token = address(new WLD("Test", "TST", 1, 0, 1, 0, recv, amounts));
+        address token = address(new WLD("Test", "TST", recv, amounts));
         ScheduleItem[] memory schedule = buildSchedule(amount, 64);
         for (uint256 i = 0; i < schedule.length; i++) {
             vm.warp(schedule[i].timestamp);
@@ -81,7 +81,7 @@ contract VestingWalletTest is Test {
         recv[0] = address(_wallet);
         uint256[] memory amounts = new uint256[](1);
         amounts[0] = amount;
-        WLD token = new WLD("Test", "TST", 1, 0, 1, 0, recv, amounts);
+        WLD token = new WLD("Test", "TST", recv, amounts);
         ScheduleItem[] memory schedule = buildSchedule(amount, 64);
         _wallet.release(address(token));
         assertEq(token.balanceOf(_beneficiary), 0);
@@ -98,7 +98,7 @@ contract VestingWalletTest is Test {
         recv[0] = address(_wallet);
         uint256[] memory amounts = new uint256[](1);
         amounts[0] = amount;
-        WLD token = new WLD("Test", "TST", 1, 0, 1, 0, recv, amounts);
+        WLD token = new WLD("Test", "TST", recv, amounts);
         ScheduleItem[] memory schedule = buildSchedule(amount, 3);
         address newOwner = address(uint160(uint256(keccak256("new beneficiary"))));
         vm.warp(schedule[1].timestamp);
