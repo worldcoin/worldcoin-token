@@ -5,15 +5,14 @@ pragma solidity ^0.8.19;
 
 import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
 import {SafeERC20} from "openzeppelin/token/ERC20/utils/SafeERC20.sol";
-import {Address} from "openzeppelin/utils/Address.sol";
 import {Ownable2Step} from "openzeppelin/access/Ownable2Step.sol";
 import {Ownable} from "openzeppelin/access/Ownable.sol";
 
 
 /**
  * @title VestingWallet
- * @dev This contract handles the vesting of Eth and ERC20 tokens for a given beneficiary. Custody of multiple tokens
- * can be given to this contract, which will release the token to the beneficiary following a given vesting schedule.
+ * @dev This contract handles the vesting of ERC20 tokens for a given beneficiary. Custody of multiple tokens
+ * can be given to this contract, which will release the token to the beneficiary following a linear vesting schedule.
  * The vesting schedule is customizable through the {vestedAmount} function.
  *
  * Any token transferred to this contract will follow the vesting schedule as if they were locked from the beginning.
@@ -27,7 +26,6 @@ import {Ownable} from "openzeppelin/access/Ownable.sol";
  * to another party.
  */
 contract VestingWallet is Ownable2Step {
-    event EtherReleased(uint256 amount);
     event ERC20Released(address indexed token, uint256 amount);
 
     /**
@@ -43,7 +41,7 @@ contract VestingWallet is Ownable2Step {
     /**
      * @dev Set the beneficiary, start timestamp and vesting duration of the vesting wallet.
      */
-    constructor(address beneficiaryAddress, uint64 startTimestamp, uint64 durationSeconds) payable  Ownable(beneficiaryAddress){
+    constructor(address beneficiaryAddress, uint64 startTimestamp, uint64 durationSeconds) Ownable(beneficiaryAddress){
         if (beneficiaryAddress == address(0)) {
             revert VestingWalletInvalidBeneficiary(address(0));
         }
@@ -51,11 +49,6 @@ contract VestingWallet is Ownable2Step {
         duration = durationSeconds;
         end  = startTimestamp + durationSeconds;
     }
-
-    /**
-     * @dev The contract should be able to receive Eth.
-     */
-    receive() external payable {}
 
     /**
      * @dev Getter for the amount of releasable `token` tokens. `token` should be the address of an
@@ -70,7 +63,7 @@ contract VestingWallet is Ownable2Step {
      *
      * Emits a {ERC20Released} event.
      */
-    function release(address token) public {
+    function release(address token) external {
         uint256 amount = releasable(token);
         released[token] += amount;
         emit ERC20Released(token, amount);
@@ -78,17 +71,10 @@ contract VestingWallet is Ownable2Step {
     }
 
     /**
-     * @dev Calculates the amount of tokens that has already vested. Default implementation is a linear vesting curve.
+     * @dev Calculates the amount of tokens that has already vested using a linear vesting curve.
      */
     function vestedAmount(address token, uint64 timestamp) public view returns (uint256) {
-        return _vestingSchedule(IERC20(token).balanceOf(address(this)) + released[token], timestamp);
-    }
-
-    /**
-     * @dev Implementation of the vesting formula. This returns the amount vested, as a function of time, for
-     * an asset given its total historical allocation.
-     */
-    function _vestingSchedule(uint256 totalAllocation, uint64 timestamp) internal view returns (uint256) {
+        uint256 totalAllocation = IERC20(token).balanceOf(address(this)) + released[token];
         if (timestamp < start) {
             return 0;
         } else if (timestamp > end) {
