@@ -6,12 +6,27 @@ import {Ownable2Step} from "openzeppelin/access/Ownable2Step.sol";
 import {ERC20} from "openzeppelin/token/ERC20/ERC20.sol";
 
 /// @title WLD token
+/// @notice Contract for Worldcoin's ERC20 WLD token.
+/// 
+/// It updates from the previous token contract, which is now deprecated. At
+/// deployment all existing balances are reinstated.
+/// 
+/// After deployment, the owner can do a one-time mint of new tokens up to the
+/// `INITIAL_SUPPLY_CAP` of 10 billion.
+/// 
+/// After `inflationUnlockTime` the owner can set the minter address, which can
+/// mint new tokens up to the inflation cap. The inflation cap is fixed
+/// percentage per period. From this follows a maximum inflation rate per
+/// year. Wheter or not to allow inflation can be goverened by the owner through
+/// the minter address.
+///
 /// @author Worldcoin
-/// @notice Contract for Worldcoin's ERC20 WLD token
 contract WLD is ERC20, Ownable2Step {
     /////////////////////////////////////////////////////////////////////////
-    ///                           STORAGE                                 ///
+    ///                           PARAMETERS                              ///
     /////////////////////////////////////////////////////////////////////////
+
+    uint256 constant public INITIAL_SUPPLY_CAP = 10 * (10**9) * (10**18);
 
     /// @notice Has the initial mint been done?
     bool public initialMintDone;
@@ -20,6 +35,7 @@ contract WLD is ERC20, Ownable2Step {
     address public minter;
 
     /// @notice Inflation variables, formula in _mint @dev description
+    uint256 immutable public inflationUnlockTime;
     uint256 immutable public inflationCapPeriod;
     uint256 immutable public inflationCapNumerator;
     uint256 immutable public inflationCapDenominator;
@@ -27,7 +43,6 @@ contract WLD is ERC20, Ownable2Step {
     uint256 public currentPeriodInitialSupply;
 
     /// @notice How many seconds until the mint lock-in period is over
-    uint256 immutable public mintUnlockTime;
 
     /////////////////////////////////////////////////////////////////////////
     ///                             EVENTS                                ///
@@ -90,12 +105,15 @@ contract WLD is ERC20, Ownable2Step {
         inflationCapPeriod = inflationCapPeriod_;
         inflationCapNumerator = inflationCapNumerator_;
         inflationCapDenominator = inflationCapDenominator_;
-        mintUnlockTime = mintLockPeriod_ + block.timestamp;
+        inflationUnlockTime = mintLockPeriod_ + block.timestamp;
 
         // Reinstate balances
         for (uint256 i = 0; i < existingHolders.length; i++) {
             _update(address(0), existingHolders[i], existingAmounts[i]);
         }
+
+        // Make sure the initial supply cap is maintained.
+        require(totalSupply() <= INITIAL_SUPPLY_CAP);
 
         // Emit event.
         emit TokenUpdated(
@@ -112,7 +130,7 @@ contract WLD is ERC20, Ownable2Step {
     }
 
     /////////////////////////////////////////////////////////////////////////
-    ///                           ADMIN ACTIONS                           ///
+    ///                           OWNER ACTIONS                           ///
     /////////////////////////////////////////////////////////////////////////
 
     /// @notice Mint new tokens.
@@ -133,6 +151,10 @@ contract WLD is ERC20, Ownable2Step {
         for (uint256 i = 0; i < newHolders.length; i++) {
             _mint(newHolders[i], newAmounts[i]);
         }
+
+        // Make sure the initial supply cap is maintained.
+        require(totalSupply() <= INITIAL_SUPPLY_CAP);
+
         emit TokensMinted(
             msg.sender,
             newHolders,
@@ -220,6 +242,8 @@ contract WLD is ERC20, Ownable2Step {
     /// @notice Requires that the caller is the minter.
     /// @custom:revert NotMinter The caller is not the minter.
     function _requireMinter() internal view {
-        if (_msgSender() != minter) revert NotMinter();
+        if (_msgSender() != minter) {
+            revert NotMinter();
+        }
     }
 }
