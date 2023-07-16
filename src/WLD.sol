@@ -9,22 +9,29 @@ import {ERC20} from "openzeppelin/token/ERC20/ERC20.sol";
 /// @author Worldcoin
 /// @notice Contract for Worldcoin's ERC20 WLD token
 contract WLD is ERC20, Ownable2Step {
+    /////////////////////////////////////////////////////////////////////////
+    ///                           STORAGE                                 ///
+    /////////////////////////////////////////////////////////////////////////
 
-    /// @notice The address of the onceMinter.
-    address public onceMinter;
+    /// @notice Has the initial mint been done?
+    bool public initialMintDone;
 
-    /// @notice The address of the minter
+    /// @notice The address of the inflation minter
     address public minter;
 
     /// @notice Inflation variables, formula in _mint @dev description
-    uint256 immutable private _inflationCapPeriod;
-    uint256 immutable private _inflationCapNumerator;
-    uint256 immutable private _inflationCapDenominator;
-    uint256 private _currentPeriodEnd;
-    uint256 private _currentPeriodInitialSupply;
+    uint256 immutable public inflationCapPeriod;
+    uint256 immutable public inflationCapNumerator;
+    uint256 immutable public inflationCapDenominator;
+    uint256 public currentPeriodEnd;
+    uint256 public currentPeriodInitialSupply;
 
     /// @notice How many seconds until the mint lock-in period is over
-    uint256 immutable private _mintUnlockTime;
+    uint256 immutable public mintUnlockTime;
+
+    /////////////////////////////////////////////////////////////////////////
+    ///                             EVENTS                                ///
+    /////////////////////////////////////////////////////////////////////////
 
     /// @notice Emitted in revert if the mint lock-in period is not over.
     error MintLockInPeriodNotOver();
@@ -58,13 +65,16 @@ contract WLD is ERC20, Ownable2Step {
         uint256[] newAmounts
     );
 
+    /////////////////////////////////////////////////////////////////////////
+    ///                           CONSTRUCTOR                             ///
+    /////////////////////////////////////////////////////////////////////////
+
     /// @notice Deploy a new token contract that replaces an existing one.
     constructor(
         address[] memory existingHolders,
         uint256[] memory existingAmounts,
         string memory name_,
         string memory symbol_,
-        address onceMinter_,
         uint256 inflationCapPeriod_,
         uint256 inflationCapNumerator_,
         uint256 inflationCapDenominator_,
@@ -75,18 +85,17 @@ contract WLD is ERC20, Ownable2Step {
         require(inflationCapDenominator_ != 0);
         require(inflationCapPeriod_ != 0);
 
-        _inflationCapPeriod = inflationCapPeriod_;
-        _inflationCapNumerator = inflationCapNumerator_;
-        _inflationCapDenominator = inflationCapDenominator_;
-        _mintUnlockTime = mintLockPeriod_ + block.timestamp;
+        initialMintDone = false;
+        minter = address(0);
+        inflationCapPeriod = inflationCapPeriod_;
+        inflationCapNumerator = inflationCapNumerator_;
+        inflationCapDenominator = inflationCapDenominator_;
+        mintUnlockTime = mintLockPeriod_ + block.timestamp;
 
         // Reinstate balances
         for (uint256 i = 0; i < existingHolders.length; i++) {
             _update(address(0), existingHolders[i], existingAmounts[i]);
         }
-        
-        // Set onceMinter
-        onceMinter = onceMinter_;
 
         // Emit event.
         emit TokenUpdated(
@@ -102,22 +111,24 @@ contract WLD is ERC20, Ownable2Step {
         );
     }
 
+    /////////////////////////////////////////////////////////////////////////
+    ///                           ADMIN ACTIONS                           ///
+    /////////////////////////////////////////////////////////////////////////
+
     /// @notice Mint new tokens.
     function mintOnce(
         address[] memory newHolders,
         uint256[] memory newAmounts
-    ) external {
-        // onceMinter must be set.
-        require(onceMinter != address(0));
-        
-        // Only the onceMinter can mint.
-        require(msg.sender == onceMinter);
+    ) external onlyOwner {
+        // This must be the only time we allow this.
+        require(initialMintDone == false);
 
         // Validate input.
         require(newHolders.length == newAmounts.length);
 
-        // onceMinter can only mint once.
-        onceMinter = address(0);
+        // Mark initial mint as done.
+        initialMintDone = true;
+
         // Mint tokens.
         for (uint256 i = 0; i < newHolders.length; i++) {
             _mint(newHolders[i], newAmounts[i]);
@@ -128,10 +139,6 @@ contract WLD is ERC20, Ownable2Step {
             newAmounts
         );
     }
-
-    ///////////////////////////////////////////////////////////////////
-    ///                        ADMIN ACTIONS                        ///
-    ///////////////////////////////////////////////////////////////////
 
     /// @notice Updates minter
     /// @dev onlyOwner
@@ -182,9 +189,9 @@ contract WLD is ERC20, Ownable2Step {
     /// @notice Checks the inflation period against block timestamp and moves
     /// it forward if it is due.
     function _adjustCurrentPeriod() internal {
-        if (block.timestamp > _currentPeriodEnd) {
-            _currentPeriodEnd = block.timestamp + _inflationCapPeriod;
-            _currentPeriodInitialSupply = totalSupply();
+        if (block.timestamp > currentPeriodEnd) {
+            currentPeriodEnd = block.timestamp + inflationCapPeriod;
+            currentPeriodInitialSupply = totalSupply();
         }
     }
 
@@ -195,8 +202,8 @@ contract WLD is ERC20, Ownable2Step {
     ) internal view {
         uint256 newTotal = totalSupply() + mintAmount;
         if (
-            newTotal * _inflationCapDenominator >
-            _currentPeriodInitialSupply * (_inflationCapNumerator + _inflationCapDenominator)
+            newTotal * inflationCapDenominator >
+            currentPeriodInitialSupply * (inflationCapNumerator + inflationCapDenominator)
         ) {
             revert InflationCapReached();
         }
@@ -205,7 +212,7 @@ contract WLD is ERC20, Ownable2Step {
     /// @notice Requires that the current time is after the mint lock-in period.
     /// @custom:revert MintLockInPeriodNotOver The mint lock-in period is not over.
     function _requirePostMintLockPeriod() internal view {
-        if (block.timestamp < _mintUnlockTime) {
+        if (block.timestamp < mintUnlockTime) {
             revert MintLockInPeriodNotOver();
         }
     }

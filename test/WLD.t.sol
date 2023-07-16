@@ -21,11 +21,10 @@ contract WLDTest is Test {
     uint256[] _initialAmounts = [501, 502];
     address[] _nextHolders = [address(0x789), address(0xABC)];
     uint256[] _nextAmounts = [503, 504];
-    WLD _token;
-    address _onceMinter = address(uint160(uint256(keccak256("onceMinter"))));
-    address _minter = address(uint160(uint256(keccak256("wld minter"))));
 
+    WLD _token;
     address _owner = address(0x123);
+    address _minter = address(uint160(uint256(keccak256("wld minter"))));
 
     /// @notice Emitted in revert if the mint lock-in period is not over.
     error MintLockInPeriodNotOver();
@@ -39,29 +38,8 @@ contract WLDTest is Test {
     /// @notice Emmitted in revert if the owner attempts to resign ownership.
     error CannotRenounceOwnership();
 
-    function setUp() public {
-        _token = new WLD(
-            _initialHolders,
-            _initialAmounts,
-            _symbol,
-            _name,
-            _onceMinter,
-            _inflationCapPeriod,
-            _inflationCapNumerator,
-            _inflationCapDenominator,
-            _mintLockInPeriod
-        );
-        _token.setMinter(_minter);
-        vm.stopPrank();
-    }
-
-    function secondDistribution() public {
-        vm.prank(_onceMinter, address(0x123));
-        _token.mintOnce(_nextHolders, _nextAmounts);
-    }
-
     modifier asOwner() {
-        vm.startPrank(_onceMinter);
+        vm.startPrank(_owner);
         _;
         vm.stopPrank();
     }
@@ -70,6 +48,24 @@ contract WLDTest is Test {
         vm.startPrank(_minter);
         _;
         vm.stopPrank();
+    }
+
+    function setUp() public asOwner() {
+        _token = new WLD(
+            _initialHolders,
+            _initialAmounts,
+            _symbol,
+            _name,
+            _inflationCapPeriod,
+            _inflationCapNumerator,
+            _inflationCapDenominator,
+            _mintLockInPeriod
+        );
+        _token.setMinter(_minter);
+    }
+
+    function secondDistribution() public asOwner() {
+        _token.mintOnce(_nextHolders, _nextAmounts);
     }
 
     ///////////////////////////////////////////////////////////////////
@@ -163,20 +159,18 @@ contract WLDTest is Test {
     ///                           REVERTS                           ///
     ///////////////////////////////////////////////////////////////////
 
-    function testFailCanMintOnlyOnce() public {
+    function testFailCanMintOnlyOnce() public asMinter() {
         secondDistribution();
-        vm.prank(_onceMinter, address(0x123));
         _token.mintOnce(_nextHolders, _nextAmounts);
     }
 
     function testFailOnlyOnceMinter(address other) public {
-        vm.assume(other != _onceMinter);
+        vm.assume(other != _owner);
         vm.prank(other, address(0x123));
         _token.mintOnce(_nextHolders, _nextAmounts);
     }
 
-    function testSecondDistribution() public {
-        vm.prank(_onceMinter, address(0x123));
+    function testSecondDistribution() public asOwner() {
         _token.mintOnce(_initialHolders, _initialAmounts);
         assert(_token.balanceOf(address(0x123)) == 501*2);
         assert(_token.balanceOf(address(0x456)) == 502*2);
@@ -208,7 +202,7 @@ contract WLDTest is Test {
             holders[i] = address(uint160(uint256(keccak256(abi.encode(i)))));
             amounts[i] = 1000 + i;
         }
-        WLD token = new WLD(holders, amounts, _symbol, _name, _onceMinter, _inflationCapPeriod, _inflationCapNumerator, _inflationCapDenominator, _mintLockInPeriod);
+        WLD token = new WLD(holders, amounts, _symbol, _name, _inflationCapPeriod, _inflationCapNumerator, _inflationCapDenominator, _mintLockInPeriod);
         for (uint256 i = 0; i < 100; i++) {
             assert(token.balanceOf(holders[i]) == 1000 + i);
         }
@@ -219,7 +213,6 @@ contract WLDTest is Test {
             holders[i] = address(uint160(uint256(keccak256(abi.encode(2**128 + i)))));
             amounts[i] = 2000 + i;
         }
-        vm.prank(_onceMinter);
         token.mintOnce(holders, amounts);
         for (uint256 i = 0; i < 100; i++) {
             assert(token.balanceOf(holders[i]) == 2000 + i);
@@ -231,15 +224,16 @@ contract WLDTest is Test {
         address[] memory holders = _initialHolders;
         uint256[] memory amounts = _initialAmounts;
         amounts[1] = 10**10 * 10**18;
-        WLD token = new WLD(holders, amounts, _symbol, _name, _onceMinter, _inflationCapPeriod, _inflationCapNumerator, _inflationCapDenominator, _mintLockInPeriod);
+        WLD token = new WLD(holders, amounts, _symbol, _name, _inflationCapPeriod, _inflationCapNumerator, _inflationCapDenominator, _mintLockInPeriod);
     }
 
     function testFailCapSecond() public {
-        WLD token = new WLD(_initialHolders, _initialAmounts, _symbol, _name, _onceMinter, _inflationCapPeriod, _inflationCapNumerator, _inflationCapDenominator, _mintLockInPeriod);
+        WLD token = new WLD(_initialHolders, _initialAmounts, _symbol, _name, _inflationCapPeriod, _inflationCapNumerator, _inflationCapDenominator, _mintLockInPeriod);
         address[] memory holders = _nextHolders;
         uint256[] memory amounts = _nextAmounts;
         amounts[1] = 10**10 * 10**18;
-        vm.prank(_onceMinter);
+        vm.startPrank(_owner);
         token.mintOnce(holders, amounts);
+        vm.stopPrank();
     }
 }
