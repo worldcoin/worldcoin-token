@@ -234,7 +234,7 @@ contract WLD is ERC20, Ownable2Step {
     /// @notice Requires that the current time is after the mint lock-in period.
     /// @custom:revert MintLockInPeriodNotOver The mint lock-in period is not over.
     function _requirePostMintLockPeriod() internal view {
-        if (block.timestamp < mintUnlockTime) {
+        if (block.timestamp < inflationUnlockTime) {
             revert MintLockInPeriodNotOver();
         }
     }
