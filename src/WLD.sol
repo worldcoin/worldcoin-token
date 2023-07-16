@@ -16,8 +16,8 @@ import {ERC20} from "openzeppelin/token/ERC20/ERC20.sol";
 /// 
 /// After `inflationUnlockTime` the owner can set the minter address, which can
 /// mint new tokens up to the inflation cap. The inflation cap is fixed
-/// percentage per period. From this follows a maximum inflation rate per
-/// year. Wheter or not to allow inflation can be goverened by the owner through
+/// percentage per period. From this it follows a maximum inflation rate per
+/// year. Whether or not to allow inflation can be goverened by the owner through
 /// the minter address.
 ///
 /// @author Worldcoin
@@ -26,7 +26,7 @@ contract WLD is ERC20, Ownable2Step {
     ///                           PARAMETERS                              ///
     /////////////////////////////////////////////////////////////////////////
 
-    uint256 constant public INITIAL_SUPPLY_CAP = 10 * (10**9) * (10**18);
+    uint256 constant public INITIAL_SUPPLY_CAP = 10_000_000_000 * (10**18);
 
     /// @notice Has the initial mint been done?
     bool public initialMintDone;
@@ -41,8 +41,6 @@ contract WLD is ERC20, Ownable2Step {
     uint256 immutable public inflationCapDenominator;
     uint256 public currentPeriodEnd;
     uint256 public currentPeriodInitialSupply;
-
-    /// @notice How many seconds until the mint lock-in period is over
 
     /////////////////////////////////////////////////////////////////////////
     ///                             EVENTS                                ///
