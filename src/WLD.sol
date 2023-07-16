@@ -1,15 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {ERC20} from "openzeppelin/token/ERC20/ERC20.sol";
+import { ERC20 } from "openzeppelin/token/ERC20/ERC20.sol";
+import { ERC20Capped } from "openzeppelin/token/ERC20/extensions/ERC20Capped.sol";
 
 /// @title WLD token
 /// @author Worldcoin
 /// @notice Contract for Worldcoin's ERC20 WLD token
-contract WLD is ERC20 {
+contract WLD is ERC20Capped {
 
     /// @notice The maximum supply of WLD tokens.
-    uint256 constant MAX_SUPPLY = 10**28; // 10 B with 18 decimals
+    uint256 constant ONE_WLD = 10**18; // 18 decimals
+    uint256 constant MAX_SUPPLY = 10**10 * ONE_WLD; // 10 Billion WLD
 
     /// @notice The address of the onceMinter.
     address public onceMinter;
@@ -31,11 +33,7 @@ contract WLD is ERC20 {
         uint256[] newAmounts
     );
 
-    ///////////////////////////////////////////////////////////////////
-    ///                         CONSTRUCTOR                         ///
-    ///////////////////////////////////////////////////////////////////
-
-    /// @notice Upgrade a token contract.
+    /// @notice Deploy a new token contract that replaces an existing one.
     constructor(
         address previousToken,
         address[] memory existingHolders,
@@ -43,13 +41,19 @@ contract WLD is ERC20 {
         string memory newName_,
         string memory newSymbol_,
         address onceMinter_
-    ) ERC20(newName_, newSymbol_) {
+    ) ERC20(newName_, newSymbol_) ERC20Capped(MAX_SUPPLY) {
         // Validate input.
         require(existingAmounts.length == existingHolders.length);
 
+        // Reinstate balances
         for (uint256 i = 0; i < existingHolders.length; i++) {
             _update(address(0), existingHolders[i], existingAmounts[i]);
         }
+        
+        // Set onceMinter
+        onceMinter = onceMinter_;
+
+        // Emit event.
         emit TokenUpdated(
             previousToken,
             address(this),
@@ -58,12 +62,6 @@ contract WLD is ERC20 {
             existingHolders,
             existingAmounts
         );
-
-        // Set onceMinter
-        onceMinter = onceMinter_;
-
-        // Insist that the total supply is within the max supply.
-        require(totalSupply() <= MAX_SUPPLY);
     }
 
     /// @notice Mint new tokens.
@@ -92,8 +90,5 @@ contract WLD is ERC20 {
             newHolders,
             newAmounts
         );
-        
-        // Insist that the total supply is still within the max supply.
-        require(totalSupply() <= MAX_SUPPLY);
     }
 }
