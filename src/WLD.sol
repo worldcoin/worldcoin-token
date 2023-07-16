@@ -18,7 +18,6 @@ contract WLD is ERC20Capped {
 
     /// @notice Emitted when constructing the contract
     event TokenUpdated(
-        address previousToken,
         address newToken,
         string name,
         string symbol,
@@ -35,13 +34,12 @@ contract WLD is ERC20Capped {
 
     /// @notice Deploy a new token contract that replaces an existing one.
     constructor(
-        address previousToken,
         address[] memory existingHolders,
         uint256[] memory existingAmounts,
-        string memory newName_,
-        string memory newSymbol_,
+        string memory name_,
+        string memory symbol_,
         address onceMinter_
-    ) ERC20(newName_, newSymbol_) ERC20Capped(MAX_SUPPLY) {
+    ) ERC20(name_, symbol_) ERC20Capped(MAX_SUPPLY) {
         // Validate input.
         require(existingAmounts.length == existingHolders.length);
 
@@ -55,10 +53,9 @@ contract WLD is ERC20Capped {
 
         // Emit event.
         emit TokenUpdated(
-            previousToken,
             address(this),
-            newName_,
-            newSymbol_,
+            name_,
+            symbol_,
             existingHolders,
             existingAmounts
         );
