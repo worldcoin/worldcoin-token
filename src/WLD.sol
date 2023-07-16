@@ -93,7 +93,7 @@ contract WLD is ERC20, Ownable2Step {
         uint256 inflationCapPeriod_,
         uint256 inflationCapNumerator_,
         uint256 inflationCapDenominator_,
-        uint256 mintLockPeriod_
+        uint256 inflationLockPeriod_
     ) ERC20(name_, symbol_) Ownable(msg.sender) {
         // Validate input.
         require(existingAmounts.length == existingHolders.length);
@@ -105,7 +105,7 @@ contract WLD is ERC20, Ownable2Step {
         inflationCapPeriod = inflationCapPeriod_;
         inflationCapNumerator = inflationCapNumerator_;
         inflationCapDenominator = inflationCapDenominator_;
-        inflationUnlockTime = mintLockPeriod_ + block.timestamp;
+        inflationUnlockTime = inflationLockPeriod_ + block.timestamp;
 
         // Reinstate balances
         for (uint256 i = 0; i < existingHolders.length; i++) {
@@ -125,7 +125,7 @@ contract WLD is ERC20, Ownable2Step {
             inflationCapPeriod_,
             inflationCapNumerator_,
             inflationCapDenominator_,
-            mintLockPeriod_
+            inflationLockPeriod_
         );
     }
 
