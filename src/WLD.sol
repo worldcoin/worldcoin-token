@@ -40,23 +40,11 @@ contract WLD is ERC20, Ownable2Step {
     uint256 immutable public inflationCapNumerator;
     uint256 immutable public inflationCapDenominator;
     uint256 public currentPeriodEnd;
-    uint256 public currentPeriodInitialSupply;
+    uint256 public currentPeriodSupplyCap;
 
     /////////////////////////////////////////////////////////////////////////
     ///                             EVENTS                                ///
     /////////////////////////////////////////////////////////////////////////
-
-    /// @notice Emitted in revert if the mint lock-in period is not over.
-    error MintLockInPeriodNotOver();
-
-    /// @notice Emmitted in revert if the caller is not the minter.
-    error NotMinter();
-
-    /// @notice Emmitted in revert if the inflation cap has been reached.
-    error InflationCapReached();
-
-    /// @notice Emmitted in revert if the owner attempts to resign ownership.
-    error CannotRenounceOwnership();
 
     /// @notice Emitted when constructing the contract
     event TokenUpdated(
@@ -71,11 +59,18 @@ contract WLD is ERC20, Ownable2Step {
         uint256 mintLockPeriod
     );
 
-    /// @notice Emitted when minting tokens. Can be emited once.
+    /// @notice Emitted when minting tokens. Can be emited only once.
     event TokensMinted(
         address minter,
         address[] newHolders,
         uint256[] newAmounts
+    );
+
+    /// @notice Emitted when inflation tokens are minted, after the initial mint.
+    event InflationTokensMinted(
+        address minter,
+        address to,
+        uint256 amount
     );
 
     /////////////////////////////////////////////////////////////////////////
@@ -98,12 +93,19 @@ contract WLD is ERC20, Ownable2Step {
         require(inflationCapDenominator_ != 0);
         require(inflationCapPeriod_ != 0);
 
+        // Allow one initial mint
         initialMintDone = false;
+
+        // Set the inflation cap parameters
         minter = address(0);
         inflationCapPeriod = inflationCapPeriod_;
         inflationCapNumerator = inflationCapNumerator_;
         inflationCapDenominator = inflationCapDenominator_;
         inflationUnlockTime = inflationLockPeriod_ + block.timestamp;
+
+        // Make sure a new inflation period starts on first call to mint.
+        currentPeriodEnd = 0;
+        currentPeriodSupplyCap = 0;
 
         // Reinstate balances
         for (uint256 i = 0; i < existingHolders.length; i++) {
@@ -170,7 +172,7 @@ contract WLD is ERC20, Ownable2Step {
     /// @notice Prevents the owner from renouncing ownership
     /// @dev onlyOwner
     function renounceOwnership() public view override onlyOwner {
-        revert CannotRenounceOwnership();
+        revert();
     }
 
     ///////////////////////////////////////////////////////////////////
@@ -198,50 +200,33 @@ contract WLD is ERC20, Ownable2Step {
     ///        does not exceed the inflation cap. In other words, period over period inflation is
     ///        bounded by the inflation cap at least for some amount of time during each period.
     function mint(address to, uint256 amount) external {
+        // Validate input
         require(amount != 0);
-        _requireMinter();
-        _requirePostMintLockPeriod();
-        _adjustCurrentPeriod();
-        _requireInflationCap(amount);
-        _mint(to, amount);
-    }
 
-    /// @notice Checks the inflation period against block timestamp and moves
-    /// it forward if it is due.
-    function _adjustCurrentPeriod() internal {
+        // Must be minter
+        require(msg.sender == minter);
+
+        // Requires that the current time is after the mint lock-in period
+        require(block.timestamp >= inflationUnlockTime);
+
+        // Moves inflation period forward if it is due.
         if (block.timestamp > currentPeriodEnd) {
+            // Update inflation period end
             currentPeriodEnd = block.timestamp + inflationCapPeriod;
-            currentPeriodInitialSupply = totalSupply();
-        }
-    }
 
-    /// @notice Prevents the minter from minting tokens above the inflation cap.
-    /// @param mintAmount The amount of newly minted tokens.
-    function _requireInflationCap(
-        uint256 mintAmount
-    ) internal view {
-        uint256 newTotal = totalSupply() + mintAmount;
-        if (
-            newTotal * inflationCapDenominator >
-            currentPeriodInitialSupply * (inflationCapNumerator + inflationCapDenominator)
-        ) {
-            revert InflationCapReached();
+            // Compute maximum supply for this period
+            uint256 initialSupply = totalSupply();
+            uint256 mintable = (initialSupply * inflationCapNumerator) / inflationCapDenominator;
+            currentPeriodSupplyCap = initialSupply + mintable;
         }
-    }
 
-    /// @notice Requires that the current time is after the mint lock-in period.
-    /// @custom:revert MintLockInPeriodNotOver The mint lock-in period is not over.
-    function _requirePostMintLockPeriod() internal view {
-        if (block.timestamp < inflationUnlockTime) {
-            revert MintLockInPeriodNotOver();
-        }
-    }
+        // Mint inflation tokens
+        _mint(to, amount);
 
-    /// @notice Requires that the caller is the minter.
-    /// @custom:revert NotMinter The caller is not the minter.
-    function _requireMinter() internal view {
-        if (_msgSender() != minter) {
-            revert NotMinter();
-        }
+        // Check amount against inflation cap
+        require(totalSupply() <= currentPeriodSupplyCap);
+
+        // Emit event
+        emit InflationTokensMinted(msg.sender, to, amount);
     }
 }
