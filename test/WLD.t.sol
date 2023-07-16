@@ -13,18 +13,16 @@ contract WLDTest is Test {
     address[] _initialHolders = [address(0x123), address(0x456)];
     uint256[] _initialAmounts = [500, 500];
     WLD _token;
-
-    /// @notice Emmitted in revert if the owner attempts to resign ownership.
-    error CannotRenounceOwnership();
+    address _onceMinter = address(uint160(uint256(keccak256("onceMinter"))));
 
     function setUp() public {
         _token = new WLD(
+            _initialHolders,
+            _initialAmounts,
             _symbol,
             _name,
-            _initialHolders,
-            _initialAmounts
+            _onceMinter
         );
-        vm.stopPrank();
     }
 
     ///////////////////////////////////////////////////////////////////
