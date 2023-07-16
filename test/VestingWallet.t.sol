@@ -13,6 +13,11 @@ contract VestingWalletTest is Test {
     address _beneficiary = address(uint160(uint256(keccak256("beneficiary"))));
     address _onceMinter = address(uint160(uint256(keccak256("onceMinter"))));
 
+    uint256 _inflationCapPeriod = 10**30;
+    uint256 _inflationCapNumerator = 0;
+    uint256 _inflationCapDenominator = 1;
+    uint256 _inflationLockInPeriod = 10**30;
+
     function setUp() public {
         _wallet = new VestingWallet(_beneficiary, _start, _duration);
     }
@@ -65,7 +70,7 @@ contract VestingWalletTest is Test {
         recv[0] = address(_wallet);
         uint256[] memory amounts = new uint256[](1);
         amounts[0] = amount;
-        address token = address(new WLD(recv, amounts, "Test", "TST", 0, 0, 0, 0));
+        address token = address(new WLD(recv, amounts, "Test", "TST", _inflationCapPeriod, _inflationCapNumerator, _inflationCapDenominator, _inflationLockInPeriod));
         ScheduleItem[] memory schedule = buildSchedule(amount, 64);
         for (uint256 i = 0; i < schedule.length; i++) {
             vm.warp(schedule[i].timestamp);
@@ -82,7 +87,7 @@ contract VestingWalletTest is Test {
         recv[0] = address(_wallet);
         uint256[] memory amounts = new uint256[](1);
         amounts[0] = amount;
-        WLD token = new WLD(recv, amounts, "Test", "TST", 0, 0, 0, 0);
+        WLD token = new WLD(recv, amounts, "Test", "TST", _inflationCapPeriod, _inflationCapNumerator, _inflationCapDenominator, _inflationLockInPeriod);
         ScheduleItem[] memory schedule = buildSchedule(amount, 64);
         _wallet.release(address(token));
         assertEq(token.balanceOf(_beneficiary), 0);
@@ -95,23 +100,31 @@ contract VestingWalletTest is Test {
 
     function testERC20OwnershipTransfer() public {
         uint256 amount = 10000;
+
         address[] memory recv = new address[](1);
         recv[0] = address(_wallet);
+
         uint256[] memory amounts = new uint256[](1);
         amounts[0] = amount;
-        WLD token = new WLD(recv, amounts, "Test", "TST", 0, 0, 0, 0);
+
+        WLD token = new WLD(recv, amounts, "Test", "TST", _inflationCapPeriod, _inflationCapNumerator, _inflationCapDenominator, _inflationLockInPeriod);
+
         ScheduleItem[] memory schedule = buildSchedule(amount, 3);
         address newOwner = address(uint160(uint256(keccak256("new beneficiary"))));
+
         vm.warp(schedule[1].timestamp);
         _wallet.release(address(token));
         assertEq(token.balanceOf(_beneficiary), 5000);
         assertEq(token.balanceOf(newOwner), 0);
+
         vm.prank(_beneficiary);
         _wallet.transferOwnership(newOwner);
         assertEq(_wallet.owner(), _beneficiary);
+
         vm.prank(newOwner);
         _wallet.acceptOwnership();
         assertEq(_wallet.owner(), newOwner);
+
         vm.warp(schedule[2].timestamp);
         _wallet.release(address(token));
         assertEq(token.balanceOf(_beneficiary), 5000);
