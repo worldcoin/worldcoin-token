@@ -25,7 +25,7 @@ import {Ownable} from "openzeppelin/access/Ownable.sol";
  * The beneficiary is controlled through the {Ownable} mechanism, so they can assign the unreleased portion of the assets
  * to another party.
  */
-contract VestingWallet is Ownable2Step {
+contract TransferableVestingWallet is Ownable2Step {
     event ERC20Released(address indexed token, uint256 amount);
 
     /**

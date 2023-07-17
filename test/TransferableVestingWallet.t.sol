@@ -2,14 +2,14 @@
 pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
-import "../src/VestingWallet.sol";
+import "../src/TransferableVestingWallet.sol";
 import "openzeppelin/utils/math/Math.sol";
 import "../src/WLD.sol";
 
 contract VestingWalletTest is Test {
     uint64 private _duration = 4 * 365 days;
     uint64 private _start = uint64(block.timestamp) + 1 hours;
-    VestingWallet _wallet;
+    TransferableVestingWallet _wallet;
     address _beneficiary = address(uint160(uint256(keccak256("beneficiary"))));
     address _onceMinter = address(uint160(uint256(keccak256("onceMinter"))));
 
@@ -19,17 +19,17 @@ contract VestingWalletTest is Test {
     uint256 _inflationLockInPeriod = 10**30;
 
     function setUp() public {
-        _wallet = new VestingWallet(_beneficiary, _start, _duration);
+        _wallet = new TransferableVestingWallet(_beneficiary, _start, _duration);
     }
 
     function testZeroBeneficiary() public {
         vm.expectRevert(
             abi.encodeWithSelector(
-                VestingWallet.VestingWalletInvalidBeneficiary.selector,
+                TransferableVestingWallet.VestingWalletInvalidBeneficiary.selector,
                 address(0)
             )
         );
-        new VestingWallet(address(0), _start, _duration);
+        new TransferableVestingWallet(address(0), _start, _duration);
     }
 
     function testParameterGetters() public {
