@@ -45,10 +45,10 @@
             "contractInputsValues": {
                 "newHolders": "[
                     0x59a0f98345f54bAB245A043488ECE7FCecD7B596,
-                    <VESTING year 0-3>,
-                    <VESTING year 3-6>,
-                    <VESTING year 6-9>,
-                    <VESTING year 9-15>
+                    0x1770bd8186aad27df9b050d65f86cf2cdc92c296,
+                    0xaee0360b73b5d01dad134f234d3a93adc1680e57,
+                    0x938ced2d1ee4afb220929f96c2eb754c053c77f7,
+                    0x5b5442c5fceae3b40c230c32a3ffe924bcbe7d93
                 ]",
                 "newAmounts": "[
                      500000000000000000000000000,
