@@ -1,0 +1,63 @@
+{
+    "version": "1.0",
+    "chainId": "1",
+    "createdAt": 1689609578265,
+    "meta": {
+        "name": "Transactions Batch",
+        "description": "",
+        "txBuilderVersion": "1.16.0",
+        "createdFromSafeAddress": "0x59a0f98345f54bAB245A043488ECE7FCecD7B596",
+        "createdFromOwnerAddress": "",
+        "checksum": "0x5e12934be0f6dfef34f9e2cce4df07471846e792a437a5401ace5e63e7f89083"
+    },
+    "transactions": [
+        {
+            "to": "0xE3ed8ca93b465455254003D6b245Dd8B4221af21",
+            "value": "0",
+            "data": null,
+            "contractMethod": {
+                "inputs": [],
+                "name": "acceptOwnership",
+                "payable": false
+            },
+            "contractInputsValues": null
+        },
+        {
+            "to": "0xE3ed8ca93b465455254003D6b245Dd8B4221af21",
+            "value": "0",
+            "data": null,
+            "contractMethod": {
+                "inputs": [
+                    {
+                        "internalType": "address[]",
+                        "name": "newHolders",
+                        "type": "address[]"
+                    },
+                    {
+                        "internalType": "uint256[]",
+                        "name": "newAmounts",
+                        "type": "uint256[]"
+                    }
+                ],
+                "name": "mintOnce",
+                "payable": false
+            },
+            "contractInputsValues": {
+                "newHolders": "[
+                    0x59a0f98345f54bAB245A043488ECE7FCecD7B596,
+                    <VESTING year 0-3>,
+                    <VESTING year 3-6>,
+                    <VESTING year 6-9>,
+                    <VESTING year 9-15>
+                ]",
+                "newAmounts": "[
+                     500000000000000000000000000,
+                    3500000000000000000000000000,
+                    1750000000000000000000000000,
+                     875000000000000000000000000,
+                     875000000000000000000000000,
+                ]"
+            }
+        }
+    ]
+}

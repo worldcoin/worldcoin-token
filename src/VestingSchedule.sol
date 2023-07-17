@@ -4,10 +4,16 @@ import {VestingWallet} from "openzeppelin/finance/VestingWallet.sol";
 
 contract VestingSchedule {
 
-    event VestingScheduleCreated(address vestingWallet, uint64 startTimestamp, uint64 durationSeconds);
+    event VestingScheduleCreated(
+        address vestingWallet,
+        address beneficiary,
+        uint256 startTimestamp,
+        uint256 endTimestamp,
+        uint256 durationSeconds
+    );
 
     constructor() {
-        address beneficiary = address(0x59a0f98345f54bAB245A043488ECE7FCecD7B596); // WorldAssets
+        address beneficiary = address(0x59a0f98345f54bAB245A043488ECE7FCecD7B596); // worldassets
         uint64 startTimestamp = 1690156800; // 2023-07-24T00:00:00Z
 
         // Make sure start time is in the next two weeks.
@@ -23,9 +29,31 @@ contract VestingSchedule {
         for (uint256 i = 0; i < endTimestamp.length; i++) {
             uint64 durationSeconds = endTimestamp[i] - startTimestamp;
 
+            // Verify duration is correct.
+            if (i == 0 || i == 1 || i == 2) {
+                // 3 years
+                require(durationSeconds == 94694400);
+            } else if (i == 3) {
+                // 6 years
+                require(durationSeconds == 189302400);
+            } else {
+                revert();
+            }
+
             VestingWallet vestingWallet = new VestingWallet(beneficiary, startTimestamp, durationSeconds);
 
-            emit VestingScheduleCreated(address(vestingWallet), startTimestamp, durationSeconds);
+            emit VestingScheduleCreated(
+                address(vestingWallet),
+                vestingWallet.beneficiary(),
+                vestingWallet.start(),
+                vestingWallet.end(),
+                vestingWallet.duration()
+            );
+
+            require(vestingWallet.beneficiary() == beneficiary);
+            require(vestingWallet.start() == startTimestamp);
+            require(vestingWallet.end() == endTimestamp[i]);
+            require(vestingWallet.duration() == durationSeconds);
 
             startTimestamp = endTimestamp[i];
         }
