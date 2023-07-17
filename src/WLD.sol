@@ -57,7 +57,7 @@ contract WLD is ERC20, Ownable2Step {
         uint256[] existingsAmounts,
         uint256 inflationCapPeriod,
         uint256 inflationCapWad,
-        uint256 mintLockPeriod
+        uint256 inflationLockPeriod
     );
 
     /// @notice Emitted when minting tokens. Can be emited only once.
