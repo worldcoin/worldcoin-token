@@ -9,18 +9,16 @@ contract DeployWLD is Script {
     address[] holders;
     uint256[] amounts;
     uint256 inflationCapPeriodInit;
-    uint256 inflationCapNumeratorInit;
-    uint256 inflationCapDenominatorInit;
+    uint256 inflationCapWadInit;
     uint256 inflationLockPeriodInit;
 
     function run() external {
         vm.startBroadcast();
 
         // 1.5% yearly inflation starting 15 years after launch
-        inflationCapPeriodInit = 2628000;
-        inflationCapNumeratorInit = 3155528;
-        inflationCapDenominatorInit = 2541731149;
-        inflationLockPeriodInit = 473975631;
+        inflationCapPeriodInit = 2628000;       // 1 month, 30 days 10 hours.
+        inflationCapWadInit = 1241487716449316; // ceil[((1.015)^(1/12) - 1) * 10**18]
+        inflationLockPeriodInit = 2163542400;   // 15 years, 2038-07-24 00:00:00 UTC
 
         // Import initial holders from old contract
         holders = [
@@ -166,8 +164,7 @@ contract DeployWLD is Script {
             "Worldcoin Token",
             "WLD",
             inflationCapPeriodInit,
-            inflationCapNumeratorInit,
-            inflationCapDenominatorInit,
+            inflationCapWadInit,
             inflationLockPeriodInit
         );
 
