@@ -27,6 +27,7 @@ contract WLD is ERC20, Ownable2Step {
     /////////////////////////////////////////////////////////////////////////
 
     uint256 constant public INITIAL_SUPPLY_CAP = 10_000_000_000 * (10**18);
+    uint256 constant public WAD_ONE = 10**18;
 
     /// @notice Has the initial mint been done?
     bool public initialMintDone;
@@ -34,11 +35,12 @@ contract WLD is ERC20, Ownable2Step {
     /// @notice The address of the inflation minter
     address public minter;
 
-    /// @notice Inflation variables, formula in _mint @dev description
+    /// @notice Inflation parameters, formula in _mint @dev description
     uint256 immutable public inflationUnlockTime;
     uint256 immutable public inflationCapPeriod;
-    uint256 immutable public inflationCapNumerator;
-    uint256 immutable public inflationCapDenominator;
+    uint256 immutable public inflationCapWad;
+
+    /// @notice Inflation cap state variables
     uint256 public currentPeriodEnd;
     uint256 public currentPeriodSupplyCap;
 
@@ -54,8 +56,7 @@ contract WLD is ERC20, Ownable2Step {
         address[] existingHolders,
         uint256[] existingsAmounts,
         uint256 inflationCapPeriod,
-        uint256 inflationCapNumerator,
-        uint256 inflationCapDenominator,
+        uint256 inflationCapWad,
         uint256 mintLockPeriod
     );
 
@@ -84,13 +85,11 @@ contract WLD is ERC20, Ownable2Step {
         string memory name_,
         string memory symbol_,
         uint256 inflationCapPeriod_,
-        uint256 inflationCapNumerator_,
-        uint256 inflationCapDenominator_,
+        uint256 inflationCapWad_,
         uint256 inflationLockPeriod_
     ) ERC20(name_, symbol_) Ownable(msg.sender) {
         // Validate input.
         require(existingAmounts.length == existingHolders.length);
-        require(inflationCapDenominator_ != 0);
         require(inflationCapPeriod_ != 0);
 
         // Allow one initial mint
@@ -99,8 +98,7 @@ contract WLD is ERC20, Ownable2Step {
         // Set the inflation cap parameters
         minter = address(0);
         inflationCapPeriod = inflationCapPeriod_;
-        inflationCapNumerator = inflationCapNumerator_;
-        inflationCapDenominator = inflationCapDenominator_;
+        inflationCapWad = inflationCapWad_;
         inflationUnlockTime = inflationLockPeriod_ + block.timestamp;
 
         // Make sure a new inflation period starts on first call to mint.
@@ -123,8 +121,7 @@ contract WLD is ERC20, Ownable2Step {
             existingHolders,
             existingAmounts,
             inflationCapPeriod_,
-            inflationCapNumerator_,
-            inflationCapDenominator_,
+            inflationCapWad_,
             inflationLockPeriod_
         );
     }
@@ -181,8 +178,9 @@ contract WLD is ERC20, Ownable2Step {
 
     /// @notice Mints new tokens and assigns them to the target address.
     /// @dev This function performs inflation checks. Their semantics is as follows:
-    ///     * It is impossible to mint any tokens during the first `_mintLockInPeriod` seconds
-    ///     * After the initial supply cap is reached, the inflation cap is in effect.
+    ///     * It is impossible to mint any tokens during the first `inflationLockPeriod_` seconds.
+    //        The end of the lock period is stored in `inflationUnlockTime`.
+    ///     * T inflation cap is in effect.
     ///       The inflation cap is enforced as follows:
     ///       1. If the current time is after the end of the current inflation period,
     ///          it is possible to raise the supply up to (current total supply) * (1 + inflation cap)
@@ -199,8 +197,9 @@ contract WLD is ERC20, Ownable2Step {
     ///        such that inflation measured between (t + tc) and (t + tc + inflation period)
     ///        does not exceed the inflation cap. In other words, period over period inflation is
     ///        bounded by the inflation cap at least for some amount of time during each period.
-    function mint(address to, uint256 amount) external {
+    function mintInflation(address to, uint256 amount) external {
         // Validate input
+        require(to != address(0));
         require(amount != 0);
 
         // Must be minter
@@ -209,21 +208,21 @@ contract WLD is ERC20, Ownable2Step {
         // Requires that the current time is after the mint lock-in period
         require(block.timestamp >= inflationUnlockTime);
 
-        // Moves inflation period forward if it is due.
+        // Stars a new inflation period if the previous one ended
         if (block.timestamp > currentPeriodEnd) {
             // Update inflation period end
             currentPeriodEnd = block.timestamp + inflationCapPeriod;
 
             // Compute maximum supply for this period
             uint256 initialSupply = totalSupply();
-            uint256 mintable = (initialSupply * inflationCapNumerator) / inflationCapDenominator;
+            uint256 mintable = (initialSupply * inflationCapWad) / WAD_ONE;
             currentPeriodSupplyCap = initialSupply + mintable;
         }
 
         // Mint inflation tokens
         _mint(to, amount);
 
-        // Check amount against inflation cap
+        // Check amount against inflation cap for this period
         require(totalSupply() <= currentPeriodSupplyCap);
 
         // Emit event
