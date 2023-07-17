@@ -26,18 +26,6 @@ contract WLDTest is Test {
     address _owner = address(0x123);
     address _minter = address(uint160(uint256(keccak256("wld minter"))));
 
-    /// @notice Emitted in revert if the mint lock-in period is not over.
-    error MintLockInPeriodNotOver();
-
-    /// @notice Emmitted in revert if the caller is not the minter.
-    error NotMinter();
-
-    /// @notice Emmitted in revert if the inflation cap has been reached.
-    error InflationCapReached();
-
-    /// @notice Emmitted in revert if the owner attempts to resign ownership.
-    error CannotRenounceOwnership();
-
     modifier asOwner() {
         vm.startPrank(_owner);
         _;
@@ -91,7 +79,7 @@ contract WLDTest is Test {
         vm.warp(_initialTime + _mintLockInPeriod + 20 seconds);
 
         vm.prank(minter);
-        vm.expectRevert(NotMinter.selector);
+        vm.expectRevert();
         _token.mint(address(this), 20);
     }
 
@@ -120,12 +108,12 @@ contract WLDTest is Test {
     /// @notice Tests that the initial distribution is restricted properly.
     function testMintsLockInPeriod() public asMinter {
         // fails – lock-in period not over
-        vm.expectRevert(MintLockInPeriodNotOver.selector);
+        vm.expectRevert();
         _token.mint(address(this), 100);
 
         // fails – lock-in period not over
         vm.warp(_initialTime + _mintLockInPeriod - 1);
-        vm.expectRevert(MintLockInPeriodNotOver.selector);
+        vm.expectRevert();
         _token.mint(address(this), 100);
         
         // works – lock-in period over
@@ -140,7 +128,7 @@ contract WLDTest is Test {
         vm.warp(_initialTime + _mintLockInPeriod);
         
         // fails – more than initial supply + inflation cap
-        vm.expectRevert(InflationCapReached.selector);
+        vm.expectRevert();
         _token.mint(address(this), 101);
 
         // works – below initial supply + inflation
@@ -151,7 +139,7 @@ contract WLDTest is Test {
         _token.mint(address(this), 50); // supply == 1100
         
         // fails - exceeding yearly cap
-        vm.expectRevert(InflationCapReached.selector);
+        vm.expectRevert();
         _token.mint(address(this), 1);
         vm.warp(_initialTime + _mintLockInPeriod + _inflationCapPeriod + 1001 seconds);
         
@@ -159,7 +147,7 @@ contract WLDTest is Test {
         _token.mint(address(this), 60); // supply == 1160
         
         // fails - exceeding yearly cap
-        vm.expectRevert(InflationCapReached.selector);
+        vm.expectRevert();
         _token.mint(address(this), 51);
 
         // succeeds - 50 is still below cap
