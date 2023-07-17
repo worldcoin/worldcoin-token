@@ -18,7 +18,7 @@ contract DeployWLD is Script {
         // 1.5% yearly inflation starting 15 years after launch
         inflationCapPeriodInit = 2628000;       // 1 month, 30 days 10 hours.
         inflationCapWadInit = 1241487716449316; // ceil[((1.015)^(1/12) - 1) * 10**18]
-        inflationLockPeriodInit = 2163542400;   // 15 years, 2038-07-24 00:00:00 UTC
+        inflationLockPeriodInit = 473938994;    // 15 years + 7 days.
 
         // Import initial holders from old contract
         holders = [
