@@ -14,8 +14,7 @@ contract VestingWalletTest is Test {
     address _onceMinter = address(uint160(uint256(keccak256("onceMinter"))));
 
     uint256 _inflationCapPeriod = 10**30;
-    uint256 _inflationCapNumerator = 0;
-    uint256 _inflationCapDenominator = 1;
+    uint256 _inflationCapWad = 0;
     uint256 _inflationLockInPeriod = 10**30;
 
     function setUp() public {
@@ -70,7 +69,7 @@ contract VestingWalletTest is Test {
         recv[0] = address(_wallet);
         uint256[] memory amounts = new uint256[](1);
         amounts[0] = amount;
-        address token = address(new WLD(recv, amounts, "Test", "TST", _inflationCapPeriod, _inflationCapNumerator, _inflationCapDenominator, _inflationLockInPeriod));
+        address token = address(new WLD(recv, amounts, "Test", "TST", _inflationCapPeriod, _inflationCapWad, _inflationLockInPeriod));
         ScheduleItem[] memory schedule = buildSchedule(amount, 64);
         for (uint256 i = 0; i < schedule.length; i++) {
             vm.warp(schedule[i].timestamp);
@@ -87,7 +86,7 @@ contract VestingWalletTest is Test {
         recv[0] = address(_wallet);
         uint256[] memory amounts = new uint256[](1);
         amounts[0] = amount;
-        WLD token = new WLD(recv, amounts, "Test", "TST", _inflationCapPeriod, _inflationCapNumerator, _inflationCapDenominator, _inflationLockInPeriod);
+        WLD token = new WLD(recv, amounts, "Test", "TST", _inflationCapPeriod, _inflationCapWad, _inflationLockInPeriod);
         ScheduleItem[] memory schedule = buildSchedule(amount, 64);
         _wallet.release(address(token));
         assertEq(token.balanceOf(_beneficiary), 0);
@@ -107,7 +106,7 @@ contract VestingWalletTest is Test {
         uint256[] memory amounts = new uint256[](1);
         amounts[0] = amount;
 
-        WLD token = new WLD(recv, amounts, "Test", "TST", _inflationCapPeriod, _inflationCapNumerator, _inflationCapDenominator, _inflationLockInPeriod);
+        WLD token = new WLD(recv, amounts, "Test", "TST", _inflationCapPeriod, _inflationCapWad, _inflationLockInPeriod);
 
         ScheduleItem[] memory schedule = buildSchedule(amount, 3);
         address newOwner = address(uint160(uint256(keccak256("new beneficiary"))));
