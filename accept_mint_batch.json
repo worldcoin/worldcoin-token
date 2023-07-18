@@ -1,18 +1,18 @@
 {
     "version": "1.0",
     "chainId": "1",
-    "createdAt": 1689609578265,
+    "createdAt": 1689628012862,
     "meta": {
         "name": "Transactions Batch",
         "description": "",
         "txBuilderVersion": "1.16.0",
         "createdFromSafeAddress": "0x59a0f98345f54bAB245A043488ECE7FCecD7B596",
         "createdFromOwnerAddress": "",
-        "checksum": "0x5e12934be0f6dfef34f9e2cce4df07471846e792a437a5401ace5e63e7f89083"
+        "checksum": "0x5e88b2d893cfc21a8a000b99e9290c3d549592a8113ba3442cc76edebc6b335a"
     },
     "transactions": [
         {
-            "to": "0xE3ed8ca93b465455254003D6b245Dd8B4221af21",
+            "to": "0x163f8C2467924be0ae7B5347228CABF260318753",
             "value": "0",
             "data": null,
             "contractMethod": {
@@ -23,7 +23,7 @@
             "contractInputsValues": null
         },
         {
-            "to": "0xE3ed8ca93b465455254003D6b245Dd8B4221af21",
+            "to": "0x163f8C2467924be0ae7B5347228CABF260318753",
             "value": "0",
             "data": null,
             "contractMethod": {
@@ -43,20 +43,8 @@
                 "payable": false
             },
             "contractInputsValues": {
-                "newHolders": "[
-                    0x59a0f98345f54bAB245A043488ECE7FCecD7B596,
-                    0x1770bd8186aad27df9b050d65f86cf2cdc92c296,
-                    0xaee0360b73b5d01dad134f234d3a93adc1680e57,
-                    0x938ced2d1ee4afb220929f96c2eb754c053c77f7,
-                    0x5b5442c5fceae3b40c230c32a3ffe924bcbe7d93
-                ]",
-                "newAmounts": "[
-                     500000000000000000000000000,
-                    3500000000000000000000000000,
-                    1750000000000000000000000000,
-                     875000000000000000000000000,
-                     875000000000000000000000000,
-                ]"
+                "newHolders": "[                    0x59a0f98345f54bAB245A043488ECE7FCecD7B596,                    0x1770bd8186aad27df9b050d65f86cf2cdc92c296,                    0xaee0360b73b5d01dad134f234d3a93adc1680e57,                    0x938ced2d1ee4afb220929f96c2eb754c053c77f7,                    0x5b5442c5fceae3b40c230c32a3ffe924bcbe7d93                ]",
+                "newAmounts": "[                     500000000000000000000000000,                    3500000000000000000000000000,                    1750000000000000000000000000,                     875000000000000000000000000,                     875000000000000000000000000,                ]"
             }
         }
     ]
