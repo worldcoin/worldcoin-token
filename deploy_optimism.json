@@ -1,0 +1,46 @@
+{
+    "version": "1.0",
+    "chainId": "1",
+    "createdAt": 1689766255762,
+    "meta": {
+        "name": "Transactions Batch",
+        "description": "",
+        "txBuilderVersion": "1.16.0",
+        "createdFromSafeAddress": "0x59a0f98345f54bAB245A043488ECE7FCecD7B596",
+        "createdFromOwnerAddress": "",
+        "checksum": "0x3b07f742199372f8d0436d5dba5ff306a0e7a28c06229019f8a3a81e9fa3c542"
+    },
+    "transactions": [
+        {
+            "to": "0x25ace71c97B33Cc4729CF772ae268934F7ab5fA1",
+            "value": "0",
+            "data": null,
+            "contractMethod": {
+                "inputs": [
+                    {
+                        "internalType": "address",
+                        "name": "_target",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "bytes",
+                        "name": "_message",
+                        "type": "bytes"
+                    },
+                    {
+                        "internalType": "uint32",
+                        "name": "_minGasLimit",
+                        "type": "uint32"
+                    }
+                ],
+                "name": "sendMessage",
+                "payable": true
+            },
+            "contractInputsValues": {
+                "_target": "0x4200000000000000000000000000000000000012",
+                "_message": "0xce5ac90f000000000000000000000000163f8c2467924be0ae7b5347228cabf260318753000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000009576f726c64636f696e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003574c440000000000000000000000000000000000000000000000000000000000",
+                "_minGasLimit": "1900000"
+            }
+        }
+    ]
+}
