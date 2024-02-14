@@ -12,10 +12,10 @@ contract WLDTest is Test {
     string _name = "Worldcoin";
     // setting inflation to 10% YOY
     uint256 _initialTime = 1234 seconds;
-    uint256 _inflationCapPeriod = 31556926 seconds;
-    uint256 _inflationCapWad = 10**18 / 10; // 10%
+    uint256 _inflationCapPeriod = 31_556_926 seconds;
+    uint256 _inflationCapWad = 10 ** 18 / 10; // 10%
     // one year before minting possible
-    uint256 _mintLockInPeriod = 31556926 seconds;
+    uint256 _mintLockInPeriod = 31_556_926 seconds;
     address[] _initialHolders = [address(0x123), address(0x456)];
     uint256[] _initialAmounts = [501, 502];
     address[] _nextHolders = [address(0x789), address(0xABC)];
@@ -37,21 +37,15 @@ contract WLDTest is Test {
         vm.stopPrank();
     }
 
-    function setUp() public asOwner() {
+    function setUp() public asOwner {
         vm.warp(_initialTime);
         _token = new WLD(
-            _initialHolders,
-            _initialAmounts,
-            _symbol,
-            _name,
-            _inflationCapPeriod,
-            _inflationCapWad,
-            _mintLockInPeriod
+            _initialHolders, _initialAmounts, _symbol, _name, _inflationCapPeriod, _inflationCapWad, _mintLockInPeriod
         );
         _token.setMinter(_minter);
     }
 
-    function secondDistribution() public asOwner() {
+    function secondDistribution() public asOwner {
         _token.mintOnce(_nextHolders, _nextAmounts);
     }
 
@@ -113,7 +107,7 @@ contract WLDTest is Test {
         vm.warp(_initialTime + _mintLockInPeriod - 1);
         vm.expectRevert();
         _token.mintInflation(address(this), 100);
-        
+
         // works – lock-in period over
         vm.warp(_initialTime + _mintLockInPeriod);
         _token.mintInflation(address(this), 100);
@@ -124,7 +118,7 @@ contract WLDTest is Test {
     /// @notice Tests that the inflation cap is enforced.
     function testInflationCap() public asMinter {
         vm.warp(_initialTime + _mintLockInPeriod);
-        
+
         // fails – more than initial supply + inflation cap
         vm.expectRevert();
         _token.mintInflation(address(this), 101);
@@ -132,18 +126,18 @@ contract WLDTest is Test {
         // works – below initial supply + inflation
         _token.mintInflation(address(this), 50); // supply == 1050
         vm.warp(_initialTime + _mintLockInPeriod + 1000 seconds);
-        
+
         // works - minting up to yearly cap
         _token.mintInflation(address(this), 50); // supply == 1100
-        
+
         // fails - exceeding yearly cap
         vm.expectRevert();
         _token.mintInflation(address(this), 1);
         vm.warp(_initialTime + _mintLockInPeriod + _inflationCapPeriod + 1001 seconds);
-        
+
         // works - next cap is 110
         _token.mintInflation(address(this), 60); // supply == 1160
-        
+
         // fails - exceeding yearly cap
         vm.expectRevert();
         _token.mintInflation(address(this), 51);
@@ -159,7 +153,7 @@ contract WLDTest is Test {
     ///                           REVERTS                           ///
     ///////////////////////////////////////////////////////////////////
 
-    function testFailCanMintOnlyOnce() public asMinter() {
+    function testFailCanMintOnlyOnce() public asMinter {
         secondDistribution();
         _token.mintOnce(_nextHolders, _nextAmounts);
     }
@@ -170,11 +164,11 @@ contract WLDTest is Test {
         _token.mintOnce(_nextHolders, _nextAmounts);
     }
 
-    function testSecondDistribution() public asOwner() {
+    function testSecondDistribution() public asOwner {
         _token.mintOnce(_initialHolders, _initialAmounts);
-        assert(_token.balanceOf(address(0x123)) == 501*2);
-        assert(_token.balanceOf(address(0x456)) == 502*2);
-        assert(_token.totalSupply() == 1003*2);
+        assert(_token.balanceOf(address(0x123)) == 501 * 2);
+        assert(_token.balanceOf(address(0x456)) == 502 * 2);
+        assert(_token.totalSupply() == 1003 * 2);
     }
 
     function testSecondDistributionAdditive() public {
@@ -206,32 +200,34 @@ contract WLDTest is Test {
         for (uint256 i = 0; i < 100; i++) {
             assert(token.balanceOf(holders[i]) == 1000 + i);
         }
-        assert(token.totalSupply() == 100*1000 + 100*(100-1)/2);
+        assert(token.totalSupply() == 100 * 1000 + 100 * (100 - 1) / 2);
 
         // Second
         for (uint256 i = 0; i < 100; i++) {
-            holders[i] = address(uint160(uint256(keccak256(abi.encode(2**128 + i)))));
+            holders[i] = address(uint160(uint256(keccak256(abi.encode(2 ** 128 + i)))));
             amounts[i] = 2000 + i;
         }
         token.mintOnce(holders, amounts);
         for (uint256 i = 0; i < 100; i++) {
             assert(token.balanceOf(holders[i]) == 2000 + i);
         }
-        assert(token.totalSupply() == 100*3000 + 2*100*(100-1)/2);
+        assert(token.totalSupply() == 100 * 3000 + 2 * 100 * (100 - 1) / 2);
     }
 
     function testFailCapInitial() public {
         address[] memory holders = _initialHolders;
         uint256[] memory amounts = _initialAmounts;
-        amounts[1] = 10**10 * 10**18;
+        amounts[1] = 10 ** 10 * 10 ** 18;
         WLD token = new WLD(holders, amounts, _symbol, _name, _inflationCapPeriod, _inflationCapWad, _mintLockInPeriod);
     }
 
     function testFailCapSecond() public {
-        WLD token = new WLD(_initialHolders, _initialAmounts, _symbol, _name, _inflationCapPeriod, _inflationCapWad, _mintLockInPeriod);
+        WLD token = new WLD(
+            _initialHolders, _initialAmounts, _symbol, _name, _inflationCapPeriod, _inflationCapWad, _mintLockInPeriod
+        );
         address[] memory holders = _nextHolders;
         uint256[] memory amounts = _nextAmounts;
-        amounts[1] = 10**10 * 10**18;
+        amounts[1] = 10 ** 10 * 10 ** 18;
         vm.startPrank(_owner);
         token.mintOnce(holders, amounts);
         vm.stopPrank();

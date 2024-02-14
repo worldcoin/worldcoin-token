@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {Ownable} from "openzeppelin/access/Ownable.sol";
-import {Ownable2Step} from "openzeppelin/access/Ownable2Step.sol";
-import {ERC20} from "openzeppelin/token/ERC20/ERC20.sol";
+import { Ownable } from "openzeppelin/access/Ownable.sol";
+import { Ownable2Step } from "openzeppelin/access/Ownable2Step.sol";
+import { ERC20 } from "openzeppelin/token/ERC20/ERC20.sol";
 
 /// @title WLD token
 /// @notice Contract for Worldcoin's ERC20 WLD token.
-/// 
+///
 /// It updates from the previous token contract, which is now deprecated. At
 /// deployment all existing balances are reinstated.
-/// 
+///
 /// After deployment, the owner can do a one-time mint of new tokens up to the
 /// `INITIAL_SUPPLY_CAP` of 10 billion.
-/// 
+///
 /// After `inflationUnlockTime` the owner can set the minter address, which can
 /// mint new tokens up to the inflation cap. The inflation cap is fixed
 /// percentage per period. From this it follows a maximum inflation rate per
@@ -26,8 +26,8 @@ contract WLD is ERC20, Ownable2Step {
     ///                           PARAMETERS                              ///
     /////////////////////////////////////////////////////////////////////////
 
-    uint256 constant public INITIAL_SUPPLY_CAP = 10_000_000_000 * (10**18);
-    uint256 constant public WAD_ONE = 10**18;
+    uint256 public constant INITIAL_SUPPLY_CAP = 10_000_000_000 * (10 ** 18);
+    uint256 public constant WAD_ONE = 10 ** 18;
 
     /// @notice Has the initial mint been done?
     bool public initialMintDone;
@@ -36,9 +36,9 @@ contract WLD is ERC20, Ownable2Step {
     address public minter;
 
     /// @notice Inflation parameters, formula in _mint @dev description
-    uint256 immutable public inflationUnlockTime;
-    uint256 immutable public inflationCapPeriod;
-    uint256 immutable public inflationCapWad;
+    uint256 public immutable inflationUnlockTime;
+    uint256 public immutable inflationCapPeriod;
+    uint256 public immutable inflationCapWad;
 
     /// @notice Inflation cap state variables
     uint256 public currentPeriodEnd;
@@ -61,18 +61,10 @@ contract WLD is ERC20, Ownable2Step {
     );
 
     /// @notice Emitted when minting tokens. Can be emited only once.
-    event TokensMinted(
-        address minter,
-        address[] newHolders,
-        uint256[] newAmounts
-    );
+    event TokensMinted(address minter, address[] newHolders, uint256[] newAmounts);
 
     /// @notice Emitted when inflation tokens are minted, after the initial mint.
-    event InflationTokensMinted(
-        address minter,
-        address to,
-        uint256 amount
-    );
+    event InflationTokensMinted(address minter, address to, uint256 amount);
 
     /////////////////////////////////////////////////////////////////////////
     ///                           CONSTRUCTOR                             ///
@@ -87,7 +79,10 @@ contract WLD is ERC20, Ownable2Step {
         uint256 inflationCapPeriod_,
         uint256 inflationCapWad_,
         uint256 inflationLockPeriod_
-    ) ERC20(name_, symbol_) Ownable(msg.sender) {
+    )
+        ERC20(name_, symbol_)
+        Ownable(msg.sender)
+    {
         // Validate input.
         require(existingAmounts.length == existingHolders.length);
         require(inflationCapPeriod_ != 0);
@@ -131,10 +126,7 @@ contract WLD is ERC20, Ownable2Step {
     /////////////////////////////////////////////////////////////////////////
 
     /// @notice Mint new tokens.
-    function mintOnce(
-        address[] memory newHolders,
-        uint256[] memory newAmounts
-    ) external onlyOwner {
+    function mintOnce(address[] memory newHolders, uint256[] memory newAmounts) external onlyOwner {
         // This must be the only time we allow this.
         require(initialMintDone == false);
 
@@ -152,11 +144,7 @@ contract WLD is ERC20, Ownable2Step {
         // Make sure the initial supply cap is maintained.
         require(totalSupply() <= INITIAL_SUPPLY_CAP);
 
-        emit TokensMinted(
-            msg.sender,
-            newHolders,
-            newAmounts
-        );
+        emit TokensMinted(msg.sender, newHolders, newAmounts);
     }
 
     /// @notice Updates minter

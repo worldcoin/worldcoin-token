@@ -13,21 +13,16 @@ contract VestingWalletTest is Test {
     address _beneficiary = address(uint160(uint256(keccak256("beneficiary"))));
     address _onceMinter = address(uint160(uint256(keccak256("onceMinter"))));
 
-    uint256 _inflationCapPeriod = 10**30;
+    uint256 _inflationCapPeriod = 10 ** 30;
     uint256 _inflationCapWad = 0;
-    uint256 _inflationLockInPeriod = 10**30;
+    uint256 _inflationLockInPeriod = 10 ** 30;
 
     function setUp() public {
         _wallet = new VestingWallet(_beneficiary, _start, _duration);
     }
 
     function testZeroBeneficiary() public {
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                VestingWallet.VestingWalletInvalidBeneficiary.selector,
-                address(0)
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(VestingWallet.VestingWalletInvalidBeneficiary.selector, address(0)));
         new VestingWallet(address(0), _start, _duration);
     }
 
@@ -47,41 +42,34 @@ contract VestingWalletTest is Test {
      * @dev Builds a schedule of `length` points, spaced uniformly between `start` and
      * `start + duration`.
      */
-    function buildSchedule(
-        uint256 fullAmount, uint256 length
-    ) public view returns (ScheduleItem[] memory) {
+    function buildSchedule(uint256 fullAmount, uint256 length) public view returns (ScheduleItem[] memory) {
         ScheduleItem[] memory schedule = new ScheduleItem[](length);
         for (uint256 i = 0; i < schedule.length; i++) {
             uint64 timestamp = uint64(_start + (i * _duration) / (length - 1));
             schedule[i].timestamp = timestamp;
-            schedule[i].expectedAmount = Math.min(
-                fullAmount,
-                (fullAmount * (timestamp - _start)) / _duration
-            );
+            schedule[i].expectedAmount = Math.min(fullAmount, (fullAmount * (timestamp - _start)) / _duration);
         }
         return schedule;
     }
 
-
     function testERC20VestingGetters() public {
-        uint256 amount = 10000;
+        uint256 amount = 10_000;
         address[] memory recv = new address[](1);
         recv[0] = address(_wallet);
         uint256[] memory amounts = new uint256[](1);
         amounts[0] = amount;
-        address token = address(new WLD(recv, amounts, "Test", "TST", _inflationCapPeriod, _inflationCapWad, _inflationLockInPeriod));
+        address token = address(
+            new WLD(recv, amounts, "Test", "TST", _inflationCapPeriod, _inflationCapWad, _inflationLockInPeriod)
+        );
         ScheduleItem[] memory schedule = buildSchedule(amount, 64);
         for (uint256 i = 0; i < schedule.length; i++) {
             vm.warp(schedule[i].timestamp);
-            assert(
-                _wallet.vestedAmount(token, schedule[i].timestamp) ==
-                    schedule[i].expectedAmount
-            );
+            assert(_wallet.vestedAmount(token, schedule[i].timestamp) == schedule[i].expectedAmount);
         }
     }
 
     function testERC20VestingExecution() public {
-        uint256 amount = 10000;
+        uint256 amount = 10_000;
         address[] memory recv = new address[](1);
         recv[0] = address(_wallet);
         uint256[] memory amounts = new uint256[](1);
@@ -98,7 +86,7 @@ contract VestingWalletTest is Test {
     }
 
     function testERC20OwnershipTransfer() public {
-        uint256 amount = 10000;
+        uint256 amount = 10_000;
 
         address[] memory recv = new address[](1);
         recv[0] = address(_wallet);

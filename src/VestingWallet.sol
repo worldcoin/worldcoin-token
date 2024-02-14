@@ -3,11 +3,10 @@
 // Modified for Worldcoin
 pragma solidity ^0.8.19;
 
-import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
-import {SafeERC20} from "openzeppelin/token/ERC20/utils/SafeERC20.sol";
-import {Ownable2Step} from "openzeppelin/access/Ownable2Step.sol";
-import {Ownable} from "openzeppelin/access/Ownable.sol";
-
+import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "openzeppelin/token/ERC20/utils/SafeERC20.sol";
+import { Ownable2Step } from "openzeppelin/access/Ownable2Step.sol";
+import { Ownable } from "openzeppelin/access/Ownable.sol";
 
 /**
  * @title VestingWallet
@@ -22,7 +21,8 @@ import {Ownable} from "openzeppelin/access/Ownable.sol";
  * By setting the duration to 0, one can configure this contract to behave like an asset timelock that hold tokens for
  * a beneficiary until a specified time.
  *
- * The beneficiary is controlled through the {Ownable} mechanism, so they can assign the unreleased portion of the assets
+ * The beneficiary is controlled through the {Ownable} mechanism, so they can assign the unreleased portion of the
+ * assets
  * to another party.
  */
 contract VestingWallet is Ownable2Step {
@@ -41,13 +41,19 @@ contract VestingWallet is Ownable2Step {
     /**
      * @dev Set the beneficiary, start timestamp and vesting duration of the vesting wallet.
      */
-    constructor(address beneficiaryAddress, uint64 startTimestamp, uint64 durationSeconds) Ownable(beneficiaryAddress){
+    constructor(
+        address beneficiaryAddress,
+        uint64 startTimestamp,
+        uint64 durationSeconds
+    )
+        Ownable(beneficiaryAddress)
+    {
         if (beneficiaryAddress == address(0)) {
             revert VestingWalletInvalidBeneficiary(address(0));
         }
         start = startTimestamp;
         duration = durationSeconds;
-        end  = startTimestamp + durationSeconds;
+        end = startTimestamp + durationSeconds;
     }
 
     /**

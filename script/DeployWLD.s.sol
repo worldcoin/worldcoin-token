@@ -1,10 +1,9 @@
 pragma solidity ^0.8.19;
 
-import {Script} from "forge-std/Script.sol";
-import {WLD} from "src/WLD.sol";
+import { Script } from "forge-std/Script.sol";
+import { WLD } from "src/WLD.sol";
 
 contract DeployWLD is Script {
-
     WLD public token;
     address[] holders;
     uint256[] amounts;
@@ -21,9 +20,9 @@ contract DeployWLD is Script {
         vm.startBroadcast();
 
         // 1.5% yearly inflation starting 15 years after launch
-        inflationCapPeriodInit = 2628000;       // 1 month, 30 days 10 hours.
-        inflationCapWadInit = 1241487716449316; // ceil[((1.015)^(1/12) - 1) * 10**18]
-        inflationLockPeriodInit = 473938994;    // 15 years + 7 days.
+        inflationCapPeriodInit = 2_628_000; // 1 month, 30 days 10 hours.
+        inflationCapWadInit = 1_241_487_716_449_316; // ceil[((1.015)^(1/12) - 1) * 10**18]
+        inflationLockPeriodInit = 473_938_994; // 15 years + 7 days.
 
         // Import initial holders from old contract
         holders = [
@@ -93,74 +92,74 @@ contract DeployWLD is Script {
             address(uint160(0x002f37aab4808d3cc985d868d516b48d63ec0834b0)),
             address(uint160(0x00911e0945cf9f44a1adb242490058f7d55e0782ad))
         ];
-        
+
         // Import initial balances from old contract
         amounts = [
-            uint256(1656555000  * 10**18),
-            uint256(125000000   * 10**18),
-            uint256(55000       * 10**18),
-            uint256(100000      * 10**18),
-            uint256(450000      * 10**18),
-            uint256(1000000     * 10**18),
-            uint256(500000      * 10**18),
-            uint256(350000      * 10**18),
-            uint256(50000000    * 10**18),
-            uint256(1000000     * 10**18),
-            uint256(2500000     * 10**18),
-            uint256(4000000     * 10**18),
-            uint256(2500000     * 10**18),
-            uint256(750000      * 10**18),
-            uint256(1000000     * 10**18),
-            uint256(50000000    * 10**18),
-            uint256(150000      * 10**18),
-            uint256(650000      * 10**18),
-            uint256(50000       * 10**18),
-            uint256(2500000     * 10**18),
-            uint256(100000      * 10**18),
-            uint256(1000000     * 10**18),
-            uint256(500000      * 10**18),
-            uint256(500000      * 10**18),
-            uint256(1000000     * 10**18),
-            uint256(750000      * 10**18),
-            uint256(500000      * 10**18),
-            uint256(25000       * 10**18),
-            uint256(100000      * 10**18),
-            uint256(5000000     * 10**18),
-            uint256(3000000     * 10**18),
-            uint256(150000      * 10**18),
-            uint256(180000      * 10**18),
-            uint256(100000      * 10**18),
-            uint256(600000      * 10**18),
-            uint256(16500000    * 10**18),
-            uint256(1000000     * 10**18),
-            uint256(1000000     * 10**18),
-            uint256(950000      * 10**18),
-            uint256(250000000   * 10**18),
-            uint256(1500000     * 10**18),
-            uint256(4500000     * 10**18),
-            uint256(150000      * 10**18),
-            uint256(1500000     * 10**18),
-            uint256(30000000    * 10**18),
-            uint256(4000000     * 10**18),
-            uint256(500000      * 10**18),
-            uint256(280000      * 10**18),
-            uint256(2500000     * 10**18),
-            uint256(3000000     * 10**18),
-            uint256(50000000    * 10**18),
-            uint256(10000000    * 10**18),
-            uint256(100000      * 10**18),
-            uint256(2000000     * 10**18),
-            uint256(15000000    * 10**18),
-            uint256(30000       * 10**18),
-            uint256(10000000    * 10**18),
-            uint256(75000       * 10**18),
-            uint256(800000      * 10**18),
-            uint256(175000000   * 10**18),
-            uint256(800000      * 10**18),
-            uint256(600000      * 10**18),
-            uint256(2500000     * 10**18),
-            uint256(2500000     * 10**18),
-            uint256(600000      * 10**18)
+            uint256(1_656_555_000 * 10 ** 18),
+            uint256(125_000_000 * 10 ** 18),
+            uint256(55_000 * 10 ** 18),
+            uint256(100_000 * 10 ** 18),
+            uint256(450_000 * 10 ** 18),
+            uint256(1_000_000 * 10 ** 18),
+            uint256(500_000 * 10 ** 18),
+            uint256(350_000 * 10 ** 18),
+            uint256(50_000_000 * 10 ** 18),
+            uint256(1_000_000 * 10 ** 18),
+            uint256(2_500_000 * 10 ** 18),
+            uint256(4_000_000 * 10 ** 18),
+            uint256(2_500_000 * 10 ** 18),
+            uint256(750_000 * 10 ** 18),
+            uint256(1_000_000 * 10 ** 18),
+            uint256(50_000_000 * 10 ** 18),
+            uint256(150_000 * 10 ** 18),
+            uint256(650_000 * 10 ** 18),
+            uint256(50_000 * 10 ** 18),
+            uint256(2_500_000 * 10 ** 18),
+            uint256(100_000 * 10 ** 18),
+            uint256(1_000_000 * 10 ** 18),
+            uint256(500_000 * 10 ** 18),
+            uint256(500_000 * 10 ** 18),
+            uint256(1_000_000 * 10 ** 18),
+            uint256(750_000 * 10 ** 18),
+            uint256(500_000 * 10 ** 18),
+            uint256(25_000 * 10 ** 18),
+            uint256(100_000 * 10 ** 18),
+            uint256(5_000_000 * 10 ** 18),
+            uint256(3_000_000 * 10 ** 18),
+            uint256(150_000 * 10 ** 18),
+            uint256(180_000 * 10 ** 18),
+            uint256(100_000 * 10 ** 18),
+            uint256(600_000 * 10 ** 18),
+            uint256(16_500_000 * 10 ** 18),
+            uint256(1_000_000 * 10 ** 18),
+            uint256(1_000_000 * 10 ** 18),
+            uint256(950_000 * 10 ** 18),
+            uint256(250_000_000 * 10 ** 18),
+            uint256(1_500_000 * 10 ** 18),
+            uint256(4_500_000 * 10 ** 18),
+            uint256(150_000 * 10 ** 18),
+            uint256(1_500_000 * 10 ** 18),
+            uint256(30_000_000 * 10 ** 18),
+            uint256(4_000_000 * 10 ** 18),
+            uint256(500_000 * 10 ** 18),
+            uint256(280_000 * 10 ** 18),
+            uint256(2_500_000 * 10 ** 18),
+            uint256(3_000_000 * 10 ** 18),
+            uint256(50_000_000 * 10 ** 18),
+            uint256(10_000_000 * 10 ** 18),
+            uint256(100_000 * 10 ** 18),
+            uint256(2_000_000 * 10 ** 18),
+            uint256(15_000_000 * 10 ** 18),
+            uint256(30_000 * 10 ** 18),
+            uint256(10_000_000 * 10 ** 18),
+            uint256(75_000 * 10 ** 18),
+            uint256(800_000 * 10 ** 18),
+            uint256(175_000_000 * 10 ** 18),
+            uint256(800_000 * 10 ** 18),
+            uint256(600_000 * 10 ** 18),
+            uint256(2_500_000 * 10 ** 18),
+            uint256(2_500_000 * 10 ** 18),
+            uint256(600_000 * 10 ** 18)
         ];
 
         token = new WLD(
@@ -174,13 +173,13 @@ contract DeployWLD is Script {
         );
 
         // Confirm amounts
-        require(token.totalSupply() == 2_500_000_000 * 10**18);
+        require(token.totalSupply() == 2_500_000_000 * 10 ** 18);
         emit LogTotalSupply(token.totalSupply());
 
         emit LogInflationUnlockTime(token.inflationUnlockTime());
         emit LogInflationCapPeriod(token.inflationCapPeriod());
         emit LogInflationCapWad(token.inflationCapWad());
-        
+
         vm.stopBroadcast();
     }
 }
