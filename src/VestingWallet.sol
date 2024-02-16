@@ -3,10 +3,10 @@
 // Modified for Worldcoin
 pragma solidity ^0.8.19;
 
-import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
-import { SafeERC20 } from "openzeppelin/token/ERC20/utils/SafeERC20.sol";
-import { Ownable2Step } from "openzeppelin/access/Ownable2Step.sol";
-import { Ownable } from "openzeppelin/access/Ownable.sol";
+import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
+import {SafeERC20} from "openzeppelin/token/ERC20/utils/SafeERC20.sol";
+import {Ownable2Step} from "openzeppelin/access/Ownable2Step.sol";
+import {Ownable} from "openzeppelin/access/Ownable.sol";
 
 /**
  * @title VestingWallet

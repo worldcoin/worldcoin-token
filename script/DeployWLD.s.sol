@@ -1,7 +1,7 @@
 pragma solidity ^0.8.19;
 
-import { Script } from "forge-std/Script.sol";
-import { WLD } from "src/WLD.sol";
+import {Script} from "forge-std/Script.sol";
+import {WLD} from "src/WLD.sol";
 
 contract DeployWLD is Script {
     WLD public token;

@@ -1,7 +1,7 @@
 pragma solidity ^0.8.24;
 
-import { Script } from "forge-std/Script.sol";
-import { VestingWallet } from "src/VestingWallet.sol";
+import {Script} from "forge-std/Script.sol";
+import {VestingWallet} from "src/VestingWallet.sol";
 
 contract DeployVestingWallets is Script {
     VestingWallet[] public vestingWallets;

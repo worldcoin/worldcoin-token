@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
-import { SafeERC20 } from "openzeppelin/token/ERC20/utils/SafeERC20.sol";
-import { Ownable2Step } from "openzeppelin/access/Ownable2Step.sol";
-import { Ownable } from "openzeppelin/access/Ownable.sol";
-import { VestingWallet } from "src/VestingWallet.sol";
+import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
+import {SafeERC20} from "openzeppelin/token/ERC20/utils/SafeERC20.sol";
+import {Ownable2Step} from "openzeppelin/access/Ownable2Step.sol";
+import {Ownable} from "openzeppelin/access/Ownable.sol";
+import {VestingWallet} from "src/VestingWallet.sol";
 
 /// @title Vesting Factory
 /// @dev This is a factory contract which will have a erc20.approve from the grants Safe contract. It creates individual

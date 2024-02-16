@@ -1,7 +1,7 @@
 pragma solidity ^0.8.24;
 
-import { Script } from "forge-std/Script.sol";
-import { VestingFactory } from "src/VestingFactory.sol";
+import {Script} from "forge-std/Script.sol";
+import {VestingFactory} from "src/VestingFactory.sol";
 
 contract DeployVestingRouter is Script {
     /// @notice WLD token address on Optimism mainnet.
