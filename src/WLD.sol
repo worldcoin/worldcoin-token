@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {Ownable} from "openzeppelin/access/Ownable.sol";
-import {Ownable2Step} from "openzeppelin/access/Ownable2Step.sol";
-import {ERC20} from "openzeppelin/token/ERC20/ERC20.sol";
+import { Ownable } from "openzeppelin/access/Ownable.sol";
+import { Ownable2Step } from "openzeppelin/access/Ownable2Step.sol";
+import { ERC20 } from "openzeppelin/token/ERC20/ERC20.sol";
 
 /// @title WLD token
 /// @notice Contract for Worldcoin's ERC20 WLD token.
