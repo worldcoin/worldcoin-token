@@ -1,7 +1,7 @@
 import { Interface, ethers } from "ethers";
 import { LedgerSigner } from "@ethers-ext/signer-ledger";
-import HIDTransport from "@ledgerhq/hw-transport-mocker";
-// import HIDTransport from "@ledgerhq/hw-transport-node-hid";
+// import HIDTransport from "@ledgerhq/hw-transport-mocker";
+import HIDTransport from "@ledgerhq/hw-transport-node-hid";
 import dotenv from "dotenv";
 import Safe, { EthersAdapter } from "@safe-global/protocol-kit";
 import SafeApiKit from "@safe-global/api-kit";
