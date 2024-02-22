@@ -1,0 +1,23 @@
+{
+  "name": "worldcoin-token",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@ethers-ext/signer-ledger": "^6.0.0-beta.1",
+    "@ethersproject/hardware-wallets": "^5.7.0",
+    "@ledgerhq/hw-transport-mocker": "^6.28.4",
+    "@ledgerhq/hw-transport-node-hid": "^6.28.4",
+    "@safe-global/api-kit": "^2.1.0",
+    "@safe-global/protocol-kit": "^3.0.0",
+    "@safe-global/safe-core-sdk-types": "^4.0.0",
+    "dotenv": "^16.4.5",
+    "ethers": "latest",
+    "tsx": "^4.7.1"
+  }
+}
