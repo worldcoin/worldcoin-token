@@ -8,62 +8,49 @@ import { Ownable } from "openzeppelin/access/Ownable.sol";
 import { VestingWallet } from "src/VestingWallet.sol";
 
 /// @title TokenLockupFactory
-/// @dev This is a factory contract which will have a erc20.approve from the grants Safe contract. It creates individual
-/// vesting wallets with the right parameters and it implements a
-/// release function which will transfer the tokens to each individual vesting wallet for each beneficiary.
+/// @notice Factory for VestingWallets with predefined lockup duration.
+/// This factory contract takes a list of receivers with amounts, deploys
+/// a VestingWallet contract for each, and transfers the given amount of tokens.
+///
+/// @author Worldcoin
 contract TokenLockupFactory is Ownable2Step {
-    /// @notice Address of the safe contract that will approve the tokens to be transferred to the vesting wallets.
-    address public immutable safeProxy;
+    uint64 public constant LOCKUP_DURATION = 40 days;
 
-    /// @notice Struct to keep track of the vesting wallets and the amount of tokens they should receive.
-    struct VestingWalletInfo {
+    /// @notice Struct to keep track of the beneficiaries and the amount of tokens
+    struct TransferInfo {
         uint256 amount;
         address beneficiary;
-        uint64 durationSeconds;
     }
 
-    /// @notice Emitted when tokens are released to a vesting wallet.
-    event VestingWalletFunded(address indexed token, address wallet, uint256 amount);
-
-    /// @notice Emitted when a new vesting wallet is created.
-    event VestingWalletCreated(address wallet, VestingWalletInfo info);
+    /// @notice Emitted when a new VestingWallet is created and tokens are transfered.
+    event LockedUpTokenTransfer(address token, address vestingWallet, uint256 amount, address beneficiary);
 
     /// @notice Emitted when the beneficiary is not a valid account.
-    error VestingWalletInvalidBeneficiary(address beneficiary);
+    error InvalidBeneficiary(address beneficiary);
 
-    /// @notice Sets the `safeProxy` address and the list of `vestingWallets` that will receive tokens.
-    /// @param _safeProxy Address of the safe contract that will approve the tokens to be transferred to the vesting
-    /// wallets.
-    /// @param owner Address of the owner of the contract.
-    constructor(address _safeProxy, address owner) Ownable(owner) {
-        safeProxy = _safeProxy;
-    }
+    /// @notice Sets the owner of the contract.
+    /// @param owner Address of the owner of the TokenLockupFactory.
+    constructor(address owner) Ownable(owner) { }
 
-    /// @notice creates and funds the vesting wallets with the right parameters.
-    /// @param token Address of the token to be transferred to the vesting wallets.
-    /// @param _vestingWallets List of vesting wallet parameters and the amount of tokens they should receive.
-    function createVestingWallets(address token, VestingWalletInfo[] calldata _vestingWallets) public onlyOwner {
-        uint256 totalSum = 0;
+    /// @notice Creates and funds the VestingWallets.
+    /// @param token Address of the token to be transferred.
+    /// @param _transferInfo List of beneficiaries and amounts.
+    function transfer(address token, TransferInfo[] calldata _transferInfo) public onlyOwner {
+        uint64 currentTimestamp = uint64(block.timestamp);
 
-        for (uint256 i = 0; i < _vestingWallets.length; i++) {
-            address beneficiary = _vestingWallets[i].beneficiary;
-            uint256 amount = _vestingWallets[i].amount;
-            uint64 start = uint64(block.timestamp);
-            uint64 duration = _vestingWallets[i].durationSeconds;
-
-            totalSum += amount;
+        for (uint256 i = 0; i < _transferInfo.length; i++) {
+            address beneficiary = _transferInfo[i].beneficiary;
+            uint256 amount = _transferInfo[i].amount;
 
             if (beneficiary == address(0)) {
-                revert VestingWalletInvalidBeneficiary(beneficiary);
+                revert InvalidBeneficiary(beneficiary);
             }
 
-            VestingWallet wallet = new VestingWallet(beneficiary, start, duration);
+            VestingWallet wallet = new VestingWallet(beneficiary, currentTimestamp + LOCKUP_DURATION, 0);
 
-            emit VestingWalletCreated(address(wallet), _vestingWallets[i]);
+            SafeERC20.safeTransferFrom(IERC20(token), msg.sender, address(wallet), amount);
 
-            SafeERC20.safeTransferFrom(IERC20(token), safeProxy, address(wallet), amount);
-
-            emit VestingWalletFunded(token, address(wallet), amount);
+            emit LockedUpTokenTransfer(token, address(wallet), amount, beneficiary);
         }
     }
 }
