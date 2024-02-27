@@ -16,6 +16,9 @@
     "@safe-global/api-kit": "^2.1.0",
     "@safe-global/protocol-kit": "^3.0.0",
     "@safe-global/safe-core-sdk-types": "^4.0.0",
+    "@types/cli-interact": "^0.1.4",
+    "cli-interact": "^0.1.9",
+    "console-table-printer": "^2.12.0",
     "dotenv": "^16.4.5",
     "ethers": "latest",
     "tsx": "^4.7.1"
